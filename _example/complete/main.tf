@@ -15,13 +15,13 @@ module "resource_group" {
 
 # APP Service
 module "app-service" {
-  source  = "../../"
-  enabled = true
-  name  = "app"
-  environment = "test"
-  label_order = ["name", "environment", ]
+  source              = "../../"
+  enabled             = true
+  name                = "app"
+  environment         = "test"
+  label_order         = ["name", "environment", ]
   resource_group_name = module.resource_group.resource_group_name
-  location = module.resource_group.resource_group_location
+  location            = module.resource_group.resource_group_location
 
   service_plan = {
     kind = "Windows"
@@ -31,7 +31,7 @@ module "app-service" {
 
   app_service_name       = "test-app-service"
   enable_client_affinity = true
-  enable_https = true
+  enable_https           = true
 
   site_config = {
     use_32_bit_worker_process = true
