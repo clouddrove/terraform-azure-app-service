@@ -8,8 +8,8 @@ module "resource_group" {
   version = "1.0.1"
 
   label_order = ["name", "environment"]
-  name        = "rg-rbac"
-  environment = "examplee"
+  name        = "rg-example"
+  environment = "test"
   location    = "Canada Central"
 }
 
@@ -18,7 +18,7 @@ module "app-service" {
   source              = "../../"
   enabled             = true
   name                = "app"
-  environment         = "test"
+  environment         = "teting"
   label_order         = ["name", "environment", ]
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
