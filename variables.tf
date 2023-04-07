@@ -69,6 +69,18 @@ variable "service_plan" {
   })
 }
 
+variable "ips_allowed" {
+  description = "IPs restriction for App Service to allow specific IP addresses or ranges"
+  type        = list(string)
+  default     = []
+}
+
+variable "subnet_ids_allowed" {
+  description = "Allow Specific Subnets for App Service"
+  type        = list(string)
+  default     = []
+}
+
 # APP SERVICE
 
 variable "app_service_name" {
@@ -144,4 +156,97 @@ variable "storage_mounts" {
   description = "Storage account mount points for App Service"
   type        = list(map(string))
   default     = []
+}
+
+# Private Endpoint
+
+variable "virtual_network_id" {
+  type        = string
+  default     = null
+  description = "The name of the virtual network"
+}
+
+variable "subnet_id" {
+  type        = string
+  default     = null
+  description = "The resource ID of the subnet"
+}
+
+variable "enable_private_endpoint" {
+  type        = bool
+  default     = false
+  description = "enable or disable private endpoint to storage account"
+}
+
+variable "existing_private_dns_zone" {
+  type        = string
+  default     = null
+  description = "Name of the existing private DNS zone"
+}
+
+variable "existing_private_dns_zone_resource_group_name" {
+  type        = string
+  default     = ""
+  description = "The name of the existing resource group"
+}
+
+## Addon vritual link
+variable "addon_vent_link" {
+  type        = bool
+  default     = false
+  description = "The name of the addon vnet "
+}
+
+variable "addon_resource_group_name" {
+  type        = string
+  default     = ""
+  description = "The name of the addon vnet resource group"
+}
+
+variable "addon_virtual_network_id" {
+  type        = string
+  default     = ""
+  description = "The name of the addon vnet link vnet id"
+}
+
+# app insights
+variable "application_insights_enabled" {
+  description = "Specify the Application Insights use for this App Service"
+  default     = true
+}
+
+variable "application_insights_id" {
+  description = "Resource ID of the existing Application Insights"
+  default     = null
+}
+
+variable "app_insights_name" {
+  description = "The Name of the application insights"
+  default     = ""
+}
+
+variable "application_insights_type" {
+  description = "Specifies the type of Application Insights to create. Valid values are `ios` for iOS, `java` for Java web, `MobileCenter` for App Center, `Node.JS` for Node.js, `other` for General, `phone` for Windows Phone, `store` for Windows Store and `web` for ASP.NET."
+  default     = "web"
+}
+
+variable "retention_in_days" {
+  description = "Specifies the retention period in days. Possible values are `30`, `60`, `90`, `120`, `180`, `270`, `365`, `550` or `730`"
+  default     = 90
+}
+
+variable "disable_ip_masking" {
+  description = "By default the real client ip is masked as `0.0.0.0` in the logs. Use this argument to disable masking and log the real client ip"
+  default     = false
+}
+
+variable "enable_vnet_integration" {
+  description = "Manages an App Service Virtual Network Association"
+  default     = false
+}
+
+variable "integration_subnet_id" {
+  type        = string
+  default     = null
+  description = "The resource ID of the subnet"
 }

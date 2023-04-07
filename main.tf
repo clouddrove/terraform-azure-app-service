@@ -16,10 +16,34 @@ module "labels" {
 }
 
 locals {
+
+  # app insights
+  app_insights = try(data.azurerm_application_insights.main.0, try(azurerm_application_insights.main.0, {}))
+
   # Default configuration for Site config block
   default_site_config = {
     always_on = "true"
   }
+
+  ip_address = [for ip_address in var.ips_allowed : {
+    name                      = "ip_restriction_cidr_${join("", [1, index(var.ips_allowed, ip_address)])}"
+    ip_address                = ip_address
+    virtual_network_subnet_id = null
+    service_tag               = null
+    subnet_id                 = null
+    priority                  = join("", [1, index(var.ips_allowed, ip_address)])
+    action                    = "Allow"
+  }]
+
+  subnets = [for subnet in var.subnet_ids_allowed : {
+    name                      = "ip_restriction_subnet_${join("", [1, index(var.subnet_ids_allowed, subnet)])}"
+    ip_address                = null
+    virtual_network_subnet_id = subnet
+    service_tag               = null
+    subnet_id                 = subnet
+    priority                  = join("", [1, index(var.subnet_ids_allowed, subnet)])
+    action                    = "Allow"
+  }]
 }
 
 data "azurerm_client_config" "main" {}
@@ -67,6 +91,7 @@ resource "azurerm_app_service" "main" {
       dotnet_framework_version  = lookup(site_config.value, "dotnet_framework_version", "v2.0")
       ftps_state                = lookup(site_config.value, "ftps_state", "FtpsOnly")
       health_check_path         = lookup(site_config.value, "health_check_path", null)
+      ip_restriction            = concat(local.subnets, local.ip_address)
       number_of_workers         = var.service_plan.per_site_scaling == true ? lookup(site_config.value, "number_of_workers") : null
       http2_enabled             = lookup(site_config.value, "http2_enabled", false)
       java_container            = lookup(site_config.value, "java_container", null)
@@ -141,4 +166,88 @@ resource "azurerm_app_service" "main" {
       connection_string,
     ]
   }
+}
+
+locals {
+  resource_group_name   = var.resource_group_name
+  location              = var.location
+  valid_rg_name         = var.existing_private_dns_zone == null ? local.resource_group_name : (var.existing_private_dns_zone_resource_group_name == "" ? local.resource_group_name : var.existing_private_dns_zone_resource_group_name)
+  private_dns_zone_name = var.existing_private_dns_zone == null ? join("", azurerm_private_dns_zone.dnszone.*.name) : var.existing_private_dns_zone
+}
+
+resource "azurerm_private_endpoint" "pep" {
+  count               = var.enabled && var.enable_private_endpoint ? 1 : 0
+  name                = format("%s-pe-app-service", module.labels.id)
+  location            = local.location
+  resource_group_name = local.resource_group_name
+  subnet_id           = var.subnet_id
+  tags                = module.labels.tags
+  private_service_connection {
+    name                           = format("%s-psc-app-service", module.labels.id)
+    is_manual_connection           = false
+    private_connection_resource_id = azurerm_app_service.main[0].id
+    subresource_names              = ["sites"]
+  }
+
+  lifecycle {
+    ignore_changes = [
+      tags,
+    ]
+  }
+}
+
+data "azurerm_private_endpoint_connection" "private-ip-0" {
+  count               = var.enabled && var.enable_private_endpoint ? 1 : 0
+  name                = join("", azurerm_private_endpoint.pep.*.name)
+  resource_group_name = local.resource_group_name
+  depends_on          = [azurerm_app_service.main]
+}
+
+resource "azurerm_private_dns_zone" "dnszone" {
+  count               = var.enabled && var.existing_private_dns_zone == null && var.enable_private_endpoint ? 1 : 0
+  name                = "privatelink.azurewebsites.net"
+  resource_group_name = local.resource_group_name
+  tags                = module.labels.tags
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "vent-link" {
+  count                 = var.enabled && var.enable_private_endpoint && (var.existing_private_dns_zone != null ? (var.existing_private_dns_zone_resource_group_name == "" ? false : true) : true) ? 1 : 0
+  name                  = var.existing_private_dns_zone == null ? format("%s-pdz-vnet-link-app-service", module.labels.id) : format("%s-pdz-vnet-link-app-service-1", module.labels.id)
+  resource_group_name   = local.valid_rg_name
+  private_dns_zone_name = local.private_dns_zone_name
+  virtual_network_id    = var.virtual_network_id
+  tags                  = module.labels.tags
+}
+
+# App Insights
+
+data "azurerm_application_insights" "main" {
+  depends_on = [
+    azurerm_app_service.main
+  ]
+  count               = var.application_insights_enabled && var.application_insights_id != null ? 1 : 0
+  name                = split("/", var.application_insights_id)[8]
+  resource_group_name = split("/", var.application_insights_id)[4]
+}
+
+resource "azurerm_application_insights" "main" {
+  depends_on = [
+    azurerm_app_service.main
+  ]
+  count               = var.application_insights_enabled && var.application_insights_id == null ? 1 : 0
+  name                = lower(format("app-insights-%s", var.app_insights_name))
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  application_type    = var.application_insights_type
+  retention_in_days   = var.retention_in_days
+  disable_ip_masking  = var.disable_ip_masking
+  tags                = merge({ "ResourceName" = "${var.app_insights_name}" }, module.labels.tags, )
+}
+
+# VNET integration
+
+resource "azurerm_app_service_virtual_network_swift_connection" "main" {
+  count          = var.enable_vnet_integration == true ? 1 : 0
+  app_service_id = azurerm_app_service.main[0].id
+  subnet_id      = var.integration_subnet_id
 }
