@@ -113,29 +113,47 @@ module "key_vault" {
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | active\_directory\_auth\_setttings | Acitve directory authentication provider settings for app service | `any` | `{}` | no |
+| addon\_resource\_group\_name | The name of the addon vnet resource group | `string` | `""` | no |
+| addon\_vent\_link | The name of the addon vnet | `bool` | `false` | no |
+| addon\_virtual\_network\_id | The name of the addon vnet link vnet id | `string` | `""` | no |
+| app\_insights\_name | The Name of the application insights | `string` | `""` | no |
 | app\_service\_name | Specifies the name of the App Service. | `string` | `""` | no |
 | app\_settings | A key-value pair of App Settings. | `map(string)` | `{}` | no |
+| application\_insights\_enabled | Specify the Application Insights use for this App Service | `bool` | `true` | no |
+| application\_insights\_id | Resource ID of the existing Application Insights | `any` | `null` | no |
+| application\_insights\_type | Specifies the type of Application Insights to create. Valid values are `ios` for iOS, `java` for Java web, `MobileCenter` for App Center, `Node.JS` for Node.js, `other` for General, `phone` for Windows Phone, `store` for Windows Store and `web` for ASP.NET. | `string` | `"web"` | no |
 | connection\_strings | Connection strings for App Service | `list(map(string))` | `[]` | no |
 | default\_auth\_provider | The default provider to use when multiple providers have been set up. Possible values are `AzureActiveDirectory`, `Facebook`, `Google`, `MicrosoftAccount` and `Twitter` | `string` | `"AzureActiveDirectory"` | no |
+| disable\_ip\_masking | By default the real client ip is masked as `0.0.0.0` in the logs. Use this argument to disable masking and log the real client ip | `bool` | `false` | no |
 | enable\_auth\_settings | Specifies the Authenication enabled or not | `bool` | `false` | no |
 | enable\_client\_affinity | Should the App Service send session affinity cookies, which route client requests in the same session to the same instance? | `bool` | `false` | no |
 | enable\_client\_certificate | Does the App Service require client certificates for incoming requests | `bool` | `false` | no |
 | enable\_https | Can the App Service only be accessed via HTTPS? | `bool` | `false` | no |
+| enable\_private\_endpoint | enable or disable private endpoint to storage account | `bool` | `false` | no |
+| enable\_vnet\_integration | Manages an App Service Virtual Network Association | `bool` | `false` | no |
 | enabled | Set to false to prevent the module from creating any resources. | `bool` | `true` | no |
 | environment | Environment (e.g. `prod`, `dev`, `staging`). | `string` | `""` | no |
+| existing\_private\_dns\_zone | Name of the existing private DNS zone | `string` | `null` | no |
+| existing\_private\_dns\_zone\_resource\_group\_name | The name of the existing resource group | `string` | `""` | no |
 | identity\_ids | Specifies a list of user managed identity ids to be assigned | `any` | `null` | no |
+| integration\_subnet\_id | The resource ID of the subnet | `string` | `null` | no |
+| ips\_allowed | IPs restriction for App Service to allow specific IP addresses or ranges | `list(string)` | `[]` | no |
 | label\_order | Label order, e.g. sequence of application name and environment `name`,`environment`,'attribute' [`webserver`,`qa`,`devops`,`public`,] . | `list(any)` | `[]` | no |
 | location | Location where resource group will be created. | `string` | `null` | no |
 | managedby | ManagedBy, eg ''. | `string` | `""` | no |
 | name | Name  (e.g. `app` or `cluster`). | `string` | `""` | no |
 | repository | Terraform current module repo | `string` | `""` | no |
 | resource\_group\_name | A container that holds related resources for an Azure solution | `string` | `""` | no |
+| retention\_in\_days | Specifies the retention period in days. Possible values are `30`, `60`, `90`, `120`, `180`, `270`, `365`, `550` or `730` | `number` | `90` | no |
 | service\_plan | Definition of the dedicated plan to use | <pre>object({<br>    kind             = string<br>    size             = string<br>    capacity         = optional(number)<br>    tier             = string<br>    per_site_scaling = optional(bool)<br>  })</pre> | n/a | yes |
 | site\_config | Site configuration for Application Service | `any` | `{}` | no |
 | storage\_mounts | Storage account mount points for App Service | `list(map(string))` | `[]` | no |
+| subnet\_id | The resource ID of the subnet | `string` | `null` | no |
+| subnet\_ids\_allowed | Allow Specific Subnets for App Service | `list(string)` | `[]` | no |
 | tags | A map of tags to add to all resources | `map(string)` | `{}` | no |
 | token\_store\_enabled | If enabled the module will durably store platform-specific security tokens that are obtained during login flows | `bool` | `false` | no |
 | unauthenticated\_client\_action | The action to take when an unauthenticated client attempts to access the app. Possible values are `AllowAnonymous` and `RedirectToLoginPage` | `string` | `"RedirectToLoginPage"` | no |
+| virtual\_network\_id | The name of the virtual network | `string` | `null` | no |
 
 ## Outputs
 
