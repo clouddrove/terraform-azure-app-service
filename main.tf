@@ -20,6 +20,13 @@ locals {
   # app insights
   app_insights = try(data.azurerm_application_insights.main.0, try(azurerm_application_insights.main.0, {}))
 
+  default_app_settings = var.application_insights_enabled ? {
+    APPLICATION_INSIGHTS_IKEY                  = try(local.app_insights.instrumentation_key, "")
+    APPINSIGHTS_INSTRUMENTATIONKEY             = try(local.app_insights.instrumentation_key, "")
+    APPLICATIONINSIGHTS_CONNECTION_STRING      = try(local.app_insights.connection_string, "")
+    ApplicationInsightsAgent_EXTENSION_VERSION = "~2"
+  } : {}
+
   # Default configuration for Site config block
   default_site_config = {
     always_on = "true"
@@ -79,7 +86,7 @@ resource "azurerm_app_service" "main" {
   https_only              = var.enable_https
   client_cert_enabled     = var.enable_client_certificate
   tags                    = module.labels.tags
-  app_settings            = var.app_settings
+  app_settings            = merge(local.default_app_settings, var.app_settings)
 
   dynamic "site_config" {
     for_each = [merge(local.default_site_config, var.site_config)]
@@ -222,18 +229,12 @@ resource "azurerm_private_dns_zone_virtual_network_link" "vent-link" {
 # App Insights
 
 data "azurerm_application_insights" "main" {
-  depends_on = [
-    azurerm_app_service.main
-  ]
   count               = var.application_insights_enabled && var.application_insights_id != null ? 1 : 0
   name                = split("/", var.application_insights_id)[8]
   resource_group_name = split("/", var.application_insights_id)[4]
 }
 
 resource "azurerm_application_insights" "main" {
-  depends_on = [
-    azurerm_app_service.main
-  ]
   count               = var.application_insights_enabled && var.application_insights_id == null ? 1 : 0
   name                = lower(format("app-insights-%s", var.app_insights_name))
   location            = var.location
