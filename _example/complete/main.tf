@@ -5,7 +5,7 @@ provider "azurerm" {
 # Resource Group
 module "resource_group" {
   source  = "clouddrove/resource-group/azure"
-  version = "1.0.1"
+  version = "1.0.2"
 
   label_order = ["name", "environment"]
   name        = "rg-example"
