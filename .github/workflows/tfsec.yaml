@@ -10,4 +10,4 @@ jobs:
   call-workflow-tfsec:
     uses: clouddrove/github-shared-workflows/.github/workflows/tfsec.yml@master
     with:
-      working_directory: '../../_example/complete'
+      working_directory: './_example'
