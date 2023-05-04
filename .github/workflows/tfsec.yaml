@@ -1,0 +1,13 @@
+name: TFSec
+permissions: write-all
+
+on:
+  pull_request:
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+jobs:
+  call-workflow-tfsec:
+    uses: clouddrove/github-shared-workflows/.github/workflows/tfsec.yml@master
+    with:
+      working_directory: './_example/complete'
