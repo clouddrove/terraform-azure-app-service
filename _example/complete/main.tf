@@ -23,6 +23,9 @@ module "app-service" {
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
 
+  enable_auth_settings      = true
+  enable_client_certificate = true
+
   service_plan = {
     kind = "Windows"
     size = "S1"
@@ -35,6 +38,7 @@ module "app-service" {
 
   site_config = {
     use_32_bit_worker_process = true
+    http2_enabled             = true
     windows_fx_version        = "node|18-lts"
   }
 
