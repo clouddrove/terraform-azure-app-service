@@ -15,7 +15,7 @@ module "resource_group" {
 
 # APP Service
 module "app-service" {
-  source              = "clouddrove/app-service/azure"
+  source              = "../../"
   enabled             = true
   name                = "app"
   environment         = "teting"
