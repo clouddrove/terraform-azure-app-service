@@ -167,10 +167,10 @@ locals {
   }
 
   auth_settings_v2_login = try(var.auth_settings_v2.login, null) == null ? local.auth_settings_v2_login_default : var.auth_settings_v2.login
-  resource_group_name   = var.resource_group_name
-  location              = var.location
-  valid_rg_name         = var.existing_private_dns_zone == null ? local.resource_group_name : (var.existing_private_dns_zone_resource_group_name == "" ? local.resource_group_name : var.existing_private_dns_zone_resource_group_name)
-  private_dns_zone_name = var.existing_private_dns_zone == null ? join("", azurerm_private_dns_zone.dnszone.*.name) : var.existing_private_dns_zone
+  resource_group_name    = var.resource_group_name
+  location               = var.location
+  valid_rg_name          = var.existing_private_dns_zone == null ? local.resource_group_name : (var.existing_private_dns_zone_resource_group_name == "" ? local.resource_group_name : var.existing_private_dns_zone_resource_group_name)
+  private_dns_zone_name  = var.existing_private_dns_zone == null ? join("", azurerm_private_dns_zone.dnszone.*.name) : var.existing_private_dns_zone
 }
 
 #---------------------------------------------Linux web app-----------------------------------------------------#
@@ -191,7 +191,7 @@ resource "azurerm_linux_web_app" "main" {
     for_each = [local.site_config]
 
     content {
-      linux_fx_version = lookup(site_config.value, "linux_fx_version", null) # ----> Added
+      linux_fx_version                              = lookup(site_config.value, "linux_fx_version", null) # ----> Added
       container_registry_managed_identity_client_id = lookup(site_config.value, "container_registry_managed_identity_client_id", null)
       container_registry_use_managed_identity       = lookup(site_config.value, "container_registry_use_managed_identity", null)
 
@@ -497,7 +497,7 @@ resource "azurerm_linux_web_app" "main" {
 
   lifecycle {
     ignore_changes = [
-      app_settings, 
+      app_settings,
       site_config.0.application_stack,
       site_config.0.cors,
       site_config.0.ip_restriction_default_action,
@@ -527,7 +527,7 @@ resource "azurerm_application_insights" "app_insights" {
   retention_in_days   = var.retention_in_days
   disable_ip_masking  = var.disable_ip_masking
   tags                = module.labels.tags
-  workspace_id        = var.app_insights_workspace_id  # Added log analytics workspace id from module in main using this variable app_insights_workspace_id 
+  workspace_id        = var.app_insights_workspace_id # Added log analytics workspace id from module in main using this variable app_insights_workspace_id 
 }
 
 #----------------------------End point ---------------------------------------------------#
@@ -600,7 +600,7 @@ resource "azurerm_monitor_diagnostic_setting" "diagnostic" {
   count                          = var.enable && var.enable_diagnostic ? 1 : 0
   name                           = format("%s-diagnostic-log", module.labels.id)
   target_resource_id             = var.enable && var.is_linux_webapp ? azurerm_linux_web_app.main[0].id : azurerm_windows_web_app.main[0].id # Added condition for both linux and windows 
-  log_analytics_workspace_id     = var.log_analytics_workspace_id 
+  log_analytics_workspace_id     = var.log_analytics_workspace_id
   storage_account_id             = var.storage_account_id
   eventhub_name                  = var.eventhub_name
   eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
@@ -638,7 +638,7 @@ resource "azurerm_windows_web_app" "main" {
     for_each = [local.site_config]
 
     content {
-      windows_fx_version = lookup(site_config.value, "windows_fx_version", null) # --> Added
+      windows_fx_version                            = lookup(site_config.value, "windows_fx_version", null) # --> Added
       container_registry_managed_identity_client_id = lookup(site_config.value, "container_registry_managed_identity_client_id", null)
       container_registry_use_managed_identity       = lookup(site_config.value, "container_registry_use_managed_identity", null)
 
@@ -945,7 +945,7 @@ resource "azurerm_windows_web_app" "main" {
 
   lifecycle {
     ignore_changes = [
-      app_settings, 
+      app_settings,
       site_config.0.application_stack,
       site_config.0.cors,
       site_config.0.ip_restriction_default_action,

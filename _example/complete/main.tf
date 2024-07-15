@@ -27,9 +27,9 @@ module "log-analytics" {
 
 # APP Service
 module "windows-web-app" {
-  source              = "../../"
+  source = "../../"
   # enable              = true
-  count               = var.enable && var.is_linux_webapp ? 0 :1
+  count               = var.enable && var.is_linux_webapp ? 0 : 1
   name                = "app"
   environment         = "testing"
   label_order         = ["name", "environment", ]
@@ -39,9 +39,9 @@ module "windows-web-app" {
   os_type  = var.windows_os_type
   sku_name = var.windows_sku_name
 
-    #log-analytics
+  #log-analytics
   log_analytics_workspace_id = module.log-analytics.workspace_id
-  app_insights_workspace_id = module.log-analytics.workspace_id # insights mein log analytics ki workspace id 
+  app_insights_workspace_id  = module.log-analytics.workspace_id # insights mein log analytics ki workspace id 
 
   #app-service logs
   # app_service_logs = var.app_service_logs
@@ -58,7 +58,7 @@ module "windows-web-app" {
   # enable_https           = true
 
   site_config = {
-    use_32_bit_worker_process = true 
+    use_32_bit_worker_process = true
   }
 
   # site_config         = var.site_config
@@ -67,7 +67,7 @@ module "windows-web-app" {
 
 
   app_settings = {
-    WEBSITE_NODE_DEFAULT_VERSION = "~16" 
+    WEBSITE_NODE_DEFAULT_VERSION = "~16"
     # linux_fx_version        = "node|18-lts"
   }
 }
@@ -75,7 +75,7 @@ module "windows-web-app" {
 
 # APP Service
 module "linux-web-app" {
-  source              = "../../"
+  source = "../../"
   # enable              = true
   count               = var.enable && var.is_linux_webapp ? 1 : 0
   name                = "app"
@@ -87,9 +87,9 @@ module "linux-web-app" {
   os_type  = var.linux_os_type
   sku_name = var.linux_sku_name
 
-    #log-analytics
+  #log-analytics
   log_analytics_workspace_id = module.log-analytics.workspace_id
-  app_insights_workspace_id = module.log-analytics.workspace_id # insights mein log analytics ki workspace id 
+  app_insights_workspace_id  = module.log-analytics.workspace_id # insights mein log analytics ki workspace id 
 
   #app-service logs
   # app_service_logs = var.app_service_logs
@@ -106,7 +106,7 @@ module "linux-web-app" {
   # enable_https           = true
 
   site_config = {
-    use_32_bit_worker_process = true 
+    use_32_bit_worker_process = true
   }
 
   # site_config         = var.site_config
@@ -115,7 +115,7 @@ module "linux-web-app" {
 
 
   app_settings = {
-    WEBSITE_NODE_DEFAULT_VERSION = "~16" 
+    WEBSITE_NODE_DEFAULT_VERSION = "~16"
     # linux_fx_version        = "node|18-lts"
   }
 }

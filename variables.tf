@@ -376,8 +376,8 @@ variable "eventhub_authorization_rule_id" {
 
 variable "is_linux_webapp" {
   description = "Enable linux web app"
-  type = bool
-  default = true
+  type        = bool
+  default     = true
 }
 
 
@@ -653,8 +653,8 @@ variable "integration_subnet_id" {
 }
 
 variable "app_insights_workspace_id" {
-  type        = string
-  default     = null
+  type    = string
+  default = null
 }
 
 variable "read_permissions" {
