@@ -1,8 +1,14 @@
 
 ## Managed By : CloudDrove
 ## Copyright @ CloudDrove. All Right Reserved.
+##----------------------------------------------------------------------------- 
+## DATA
+##-----------------------------------------------------------------------------
+data "azurerm_client_config" "main" {}
 
-
+##----------------------------------------------------------------------------- 
+## Labels module called that will be used for naming and tags.   
+##-----------------------------------------------------------------------------
 module "labels" {
 
   source  = "clouddrove/labels/azure"
@@ -15,26 +21,9 @@ module "labels" {
   repository  = var.repository
 }
 
-#---------------------------------------------DATA-----------------------------------------------#
-data "azurerm_client_config" "main" {}
-
-#---------------------------------------------APP SERVICE PLAN-----------------------------------------------#
-resource "azurerm_service_plan" "main" {
-  count               = var.enable ? 1 : 0
-  name                = format("%s-asp", module.labels.id)
-  resource_group_name = var.resource_group_name
-  location            = var.location
-
-  os_type                      = var.os_type
-  sku_name                     = var.sku_name
-  worker_count                 = var.sku_name == "B1" ? null : var.worker_count
-  maximum_elastic_worker_count = var.maximum_elastic_worker_count
-  app_service_environment_id   = var.app_service_environment_id
-  per_site_scaling_enabled     = var.per_site_scaling_enabled
-  tags                         = module.labels.tags
-}
-
-#---------------------------------------------Locals-----------------------------------------------------#
+##----------------------------------------------------------------------------- 
+## Locals
+##-----------------------------------------------------------------------------
 locals {
   default_site_config = {
     always_on               = "true"
@@ -173,11 +162,30 @@ locals {
   private_dns_zone_name  = var.existing_private_dns_zone == null ? join("", azurerm_private_dns_zone.dnszone.*.name) : var.existing_private_dns_zone
 }
 
-#---------------------------------------------Linux web app-----------------------------------------------------#
+##----------------------------------------------------------------------------- 
+## App service plan  
+##-----------------------------------------------------------------------------
+resource "azurerm_service_plan" "main" {
+  count               = var.enable ? 1 : 0
+  name                = format("%s-asp", module.labels.id)
+  resource_group_name = var.resource_group_name
+  location            = var.location
+
+  os_type                      = var.os_type
+  sku_name                     = var.sku_name
+  worker_count                 = var.sku_name == "B1" ? null : var.worker_count
+  maximum_elastic_worker_count = var.maximum_elastic_worker_count
+  app_service_environment_id   = var.app_service_environment_id
+  per_site_scaling_enabled     = var.per_site_scaling_enabled
+  tags                         = module.labels.tags
+}
+
+##----------------------------------------------------------------------------- 
+## Linux web app  
+##-----------------------------------------------------------------------------
 
 resource "azurerm_linux_web_app" "main" {
-  # count               = var.enable_linux_web_app ? 1 : 0
-  count               = var.enable && var.is_linux_webapp ? 1 : 0
+  count               = var.enable && var.os_type == "Linux" ? 1 : 0
   name                = format("%s-linux-app", module.labels.id)
   resource_group_name = var.resource_group_name
   location            = var.location
@@ -241,18 +249,20 @@ resource "azurerm_linux_web_app" "main" {
 
       vnet_route_all_enabled = var.app_service_vnet_integration_subnet_id != null
 
-      dynamic "application_stack" {
-        for_each = lookup(site_config.value, "application_stack", null) == null ? [] : ["application_stack"]
-        content {
-          dotnet_version      = lookup(local.site_config.application_stack, "dotnet_version", null)
-          java_server         = lookup(local.site_config.application_stack, "java_server", null)
-          java_server_version = lookup(local.site_config.application_stack, "java_server_version", null)
-          java_version        = lookup(local.site_config.application_stack, "java_version", null)
-          node_version        = lookup(local.site_config.application_stack, "node_version", null)
-          php_version         = lookup(local.site_config.application_stack, "php_version", null)
-          python_version      = lookup(local.site_config.application_stack, "python_version", null)
-          ruby_version        = lookup(local.site_config.application_stack, "ruby_version", null)
-        }
+      application_stack {
+        docker_image_name        = var.use_docker ? var.docker_image_name : null
+        docker_registry_url      = var.use_docker ? format("https://%s", var.docker_registry_url) : null
+        docker_registry_username = var.use_docker ? var.docker_registry_username : null
+        docker_registry_password = var.use_docker ? var.docker_registry_password : null
+        dotnet_version           = var.use_dotnet ? var.dotnet_version : null
+        node_version             = var.use_node ? var.node_version : null
+        java_version             = var.use_java ? var.java_version : null
+        java_server              = var.use_java ? var.java_server : null
+        java_server_version      = var.use_java ? var.java_server_version : null
+        php_version              = var.use_php ? var.php_version : null
+        python_version           = var.use_python ? var.python_version : null
+        ruby_version             = var.use_ruby ? var.ruby_version : null
+        go_version               = var.use_go ? var.go_version : null
       }
 
       dynamic "cors" {
@@ -498,7 +508,7 @@ resource "azurerm_linux_web_app" "main" {
   lifecycle {
     ignore_changes = [
       app_settings,
-      site_config.0.application_stack,
+      # site_config.0.application_stack,
       site_config.0.cors,
       site_config.0.ip_restriction_default_action,
       site_config.0.scm_ip_restriction_default_action,
@@ -507,125 +517,12 @@ resource "azurerm_linux_web_app" "main" {
   }
 }
 
-#------------------------------App insights-------------------------------------------------------#
-
-data "azurerm_application_insights" "app_insights" {
-  count = var.application_insights_enabled && var.application_insights_id != null ? 1 : 0
-
-  name                = split("/", var.application_insights_id)[8]
-  resource_group_name = split("/", var.application_insights_id)[4]
-}
-
-resource "azurerm_application_insights" "app_insights" {
-  count = var.enable && var.application_insights_enabled && var.application_insights_id == null ? 1 : 0
-
-  name                = format("%s-app-insights", module.labels.id)
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  application_type    = var.application_insights_type
-  sampling_percentage = var.application_insights_sampling_percentage
-  retention_in_days   = var.retention_in_days
-  disable_ip_masking  = var.disable_ip_masking
-  tags                = module.labels.tags
-  workspace_id        = var.app_insights_workspace_id # Added log analytics workspace id from module in main using this variable app_insights_workspace_id 
-}
-
-#----------------------------End point ---------------------------------------------------#
-
-resource "azurerm_private_endpoint" "pep" {
-  count               = var.enable && var.enable_private_endpoint ? 1 : 0
-  name                = format("%s-pe-app-service", module.labels.id)
-  location            = local.location
-  resource_group_name = local.resource_group_name
-  subnet_id           = var.subnet_id
-  tags                = module.labels.tags
-  private_service_connection {
-    name                           = format("%s-psc-app-service", module.labels.id)
-    is_manual_connection           = false
-    private_connection_resource_id = azurerm_linux_web_app.main[0].id
-    subresource_names              = ["sites"]
-  }
-
-  lifecycle {
-    ignore_changes = [
-      tags,
-    ]
-  }
-}
-
-data "azurerm_private_endpoint_connection" "private-ip-0" {
-  count               = var.enable && var.enable_private_endpoint ? 1 : 0
-  name                = join("", azurerm_private_endpoint.pep.*.name)
-  resource_group_name = local.resource_group_name
-  depends_on          = [azurerm_linux_web_app.main]
-}
-
-#---------------------------- Dns Zone ---------------------------------------------------#
-
-resource "azurerm_private_dns_zone" "dnszone" {
-  count               = var.enable && var.existing_private_dns_zone == null && var.enable_private_endpoint ? 1 : 0
-  name                = "privatelink.azurewebsites.net"
-  resource_group_name = local.resource_group_name
-  tags                = module.labels.tags
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "vent-link" {
-  count                 = var.enable && var.enable_private_endpoint && (var.existing_private_dns_zone != null ? (var.existing_private_dns_zone_resource_group_name == "" ? false : true) : true) ? 1 : 0
-  name                  = var.existing_private_dns_zone == null ? format("%s-pdz-vnet-link-app-service", module.labels.id) : format("%s-pdz-vnet-link-app-service-1", module.labels.id)
-  resource_group_name   = local.valid_rg_name
-  private_dns_zone_name = local.private_dns_zone_name
-  virtual_network_id    = var.virtual_network_id
-  tags                  = module.labels.tags
-}
-
-#-------------------------- Telemetry --------------------------------------#
-
-resource "azurerm_application_insights_api_key" "read_telemetry" {
-  name                    = format("%s-app-insights-api-key", module.labels.id)
-  application_insights_id = azurerm_application_insights.app_insights[0].id
-  read_permissions        = var.read_permissions
-}
-
-#---------------------------- Vnet Integration ---------------------------------------------------#
-
-resource "azurerm_app_service_virtual_network_swift_connection" "main" {
-  count          = var.enable_vnet_integration == true ? 1 : 0
-  app_service_id = azurerm_linux_web_app.main[0].id
-  subnet_id      = var.integration_subnet_id
-}
-
-#---------------------------- Diagnostic Settings ---------------------------------------------------#
-
-resource "azurerm_monitor_diagnostic_setting" "diagnostic" {
-  count                          = var.enable && var.enable_diagnostic ? 1 : 0
-  name                           = format("%s-diagnostic-log", module.labels.id)
-  target_resource_id             = var.enable && var.is_linux_webapp ? azurerm_linux_web_app.main[0].id : azurerm_windows_web_app.main[0].id # Added condition for both linux and windows 
-  log_analytics_workspace_id     = var.log_analytics_workspace_id
-  storage_account_id             = var.storage_account_id
-  eventhub_name                  = var.eventhub_name
-  eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
-  log_analytics_destination_type = var.log_analytics_destination_type
-  dynamic "enabled_log" {
-    for_each = var.log_category
-    content {
-      category = enabled_log.value
-    }
-  }
-
-  dynamic "metric" {
-    for_each = var.metric_enabled ? ["AllMetrics"] : []
-    content {
-      category = metric.value
-      enabled  = true
-    }
-  }
-}
-
-
-#------------------------------------------------------------- Windows Web App ------------------------------------------------------------------------------------#
+##----------------------------------------------------------------------------- 
+## Windows web app 
+##-----------------------------------------------------------------------------
 
 resource "azurerm_windows_web_app" "main" {
-  count               = var.enable && var.is_linux_webapp ? 0 : 1
+  count               = var.enable && var.os_type == "Windows" ? 1 : 0
   name                = format("%s-windows-app", module.labels.id)
   resource_group_name = var.resource_group_name
   location            = var.location
@@ -688,19 +585,20 @@ resource "azurerm_windows_web_app" "main" {
 
       vnet_route_all_enabled = var.app_service_vnet_integration_subnet_id != null
 
-      dynamic "application_stack" {
-        for_each = lookup(site_config.value, "application_stack", null) == null ? [] : ["application_stack"]
-        content {
-          current_stack                = lookup(local.site_config.application_stack, "current_stack", null)
-          dotnet_version               = lookup(local.site_config.application_stack, "dotnet_version", null)
-          dotnet_core_version          = lookup(local.site_config.application_stack, "dotnet_core_version", null)
-          tomcat_version               = lookup(local.site_config.application_stack, "tomcat_version", null)
-          java_embedded_server_enabled = lookup(local.site_config.application_stack, "java_embedded_server_enabled", false)
-          java_version                 = lookup(local.site_config.application_stack, "java_version", null)
-          node_version                 = lookup(local.site_config.application_stack, "node_version", null)
-          php_version                  = lookup(local.site_config.application_stack, "php_version", null)
-          python                       = lookup(local.site_config.application_stack, "python", false) || lookup(local.site_config.application_stack, "python_version", null) != null
-        }
+      application_stack {
+        docker_image_name            = var.use_docker ? var.docker_image_name : null
+        docker_registry_url          = var.use_docker ? format("https://%s", var.docker_registry_url) : null
+        docker_registry_username     = var.use_docker ? var.docker_registry_username : null
+        docker_registry_password     = var.use_docker ? var.docker_registry_password : null
+        current_stack                = var.use_current_stack ? var.current_stack : null
+        python                       = var.use_python && var.current_stack == "python" ? var.use_python : null # Can only be true or false 
+        php_version                  = var.use_php && var.current_stack == "php" ? var.php_version : null
+        node_version                 = var.use_node && var.current_stack == "node" ? var.node_version : null
+        java_version                 = var.use_java && var.current_stack == "java" ? var.java_version : null
+        java_embedded_server_enabled = var.use_java && var.current_stack == "java" ? var.java_embedded_server_enabled : null
+        tomcat_version               = var.use_tomcat ? var.tomcat_version : null
+        dotnet_version               = var.use_dotnet && var.current_stack == "dotnet" ? var.dotnet_version : null
+        dotnet_core_version          = var.use_dotnet && var.current_stack == "dotnetcore" ? var.dotnet_core_version : null
       }
 
       dynamic "cors" {
@@ -946,7 +844,7 @@ resource "azurerm_windows_web_app" "main" {
   lifecycle {
     ignore_changes = [
       app_settings,
-      site_config.0.application_stack,
+      # site_config.0.application_stack,
       site_config.0.cors,
       site_config.0.ip_restriction_default_action,
       site_config.0.scm_ip_restriction_default_action,
@@ -955,3 +853,139 @@ resource "azurerm_windows_web_app" "main" {
   }
 }
 
+##----------------------------------------------------------------------------- 
+## Application Insights 
+##-----------------------------------------------------------------------------
+
+data "azurerm_application_insights" "app_insights" {
+  count = var.application_insights_enabled && var.application_insights_id != null ? 1 : 0
+
+  name                = split("/", var.application_insights_id)[8]
+  resource_group_name = split("/", var.application_insights_id)[4]
+}
+
+resource "azurerm_application_insights" "app_insights" {
+  count = var.enable && var.application_insights_enabled && var.application_insights_id == null ? 1 : 0
+
+  name                = format("%s-app-insights", module.labels.id)
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  application_type    = var.application_insights_type
+  sampling_percentage = var.application_insights_sampling_percentage
+  retention_in_days   = var.retention_in_days
+  disable_ip_masking  = var.disable_ip_masking
+  tags                = module.labels.tags
+  workspace_id        = var.app_insights_workspace_id # Added log analytics workspace id from module in main using this variable app_insights_workspace_id 
+}
+
+##----------------------------------------------------------------------------- 
+## End Point
+##-----------------------------------------------------------------------------
+
+resource "azurerm_private_endpoint" "pep" {
+  count               = var.enable && var.enable_private_endpoint ? 1 : 0
+  name                = format("%s-pe-app-service", module.labels.id)
+  location            = local.location
+  resource_group_name = local.resource_group_name
+  subnet_id           = var.subnet_id
+  tags                = module.labels.tags
+  private_service_connection {
+    name                           = format("%s-psc-app-service", module.labels.id)
+    is_manual_connection           = false
+    private_connection_resource_id = azurerm_linux_web_app.main[0].id
+    subresource_names              = ["sites"]
+  }
+
+  lifecycle {
+    ignore_changes = [
+      tags,
+    ]
+  }
+}
+
+data "azurerm_private_endpoint_connection" "private-ip-0" {
+  count               = var.enable && var.enable_private_endpoint ? 1 : 0
+  name                = join("", azurerm_private_endpoint.pep.*.name)
+  resource_group_name = local.resource_group_name
+  depends_on          = [azurerm_linux_web_app.main]
+}
+
+##----------------------------------------------------------------------------- 
+## Dns Zone 
+##-----------------------------------------------------------------------------
+
+resource "azurerm_private_dns_zone" "dnszone" {
+  count               = var.enable && var.existing_private_dns_zone == null && var.enable_private_endpoint ? 1 : 0
+  name                = "privatelink.azurewebsites.net"
+  resource_group_name = local.resource_group_name
+  tags                = module.labels.tags
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "vent-link" {
+  count                 = var.enable && var.enable_private_endpoint && (var.existing_private_dns_zone != null ? (var.existing_private_dns_zone_resource_group_name == "" ? false : true) : true) ? 1 : 0
+  name                  = var.existing_private_dns_zone == null ? format("%s-pdz-vnet-link-app-service", module.labels.id) : format("%s-pdz-vnet-link-app-service-1", module.labels.id)
+  resource_group_name   = local.valid_rg_name
+  private_dns_zone_name = local.private_dns_zone_name
+  virtual_network_id    = var.virtual_network_id
+  tags                  = module.labels.tags
+}
+
+##----------------------------------------------------------------------------- 
+## Telemetry  
+##-----------------------------------------------------------------------------
+
+resource "azurerm_application_insights_api_key" "read_telemetry" {
+  name                    = format("%s-app-insights-api-key", module.labels.id)
+  application_insights_id = azurerm_application_insights.app_insights[0].id
+  read_permissions        = var.read_permissions
+}
+
+##----------------------------------------------------------------------------- 
+## Vnet Integration
+##-----------------------------------------------------------------------------
+
+resource "azurerm_app_service_virtual_network_swift_connection" "main" {
+  count          = var.enable_vnet_integration == true ? 1 : 0
+  app_service_id = azurerm_linux_web_app.main[0].id
+  subnet_id      = var.integration_subnet_id
+}
+
+##----------------------------------------------------------------------------- 
+## Diagnostic settings  
+##-----------------------------------------------------------------------------
+
+resource "azurerm_monitor_diagnostic_setting" "diagnostic" {
+  count                          = var.enable && var.enable_diagnostic ? 1 : 0
+  name                           = format("%s-diagnostic-log", module.labels.id)
+  target_resource_id             = var.enable && var.os_type == "Linux" ? azurerm_linux_web_app.main[0].id : azurerm_windows_web_app.main[0].id # Added condition for both linux and windows 
+  log_analytics_workspace_id     = var.log_analytics_workspace_id
+  storage_account_id             = var.storage_account_id
+  eventhub_name                  = var.eventhub_name
+  eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
+  log_analytics_destination_type = var.log_analytics_destination_type
+  dynamic "enabled_log" {
+    for_each = var.log_category
+    content {
+      category = enabled_log.value
+    }
+  }
+
+  dynamic "metric" {
+    for_each = var.metric_enabled ? ["AllMetrics"] : []
+    content {
+      category = metric.value
+      enabled  = true
+    }
+  }
+}
+
+##----------------------------------------------------------------------------- 
+## Acr Role assignment
+##-----------------------------------------------------------------------------
+resource "azurerm_role_assignment" "acr_pull" {
+  count                            = var.enable && var.use_docker && var.site_config.container_registry_use_managed_identity == true ? 1 : 0
+  principal_id                     = var.enable && var.os_type == "Linux" ? azurerm_linux_web_app.main[0].identity.0.principal_id : azurerm_windows_web_app.main[0].identity.0.principal_id # Updated Condition
+  role_definition_name             = "AcrPull"
+  scope                            = var.acr_id
+  skip_service_principal_aad_check = true
+}

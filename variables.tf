@@ -213,6 +213,54 @@ variable "docker_registry_password" {
   description = "The User Name to use for authentication against the registry to pull the image."
 }
 
+variable "dotnet_version" {
+  type        = string
+  default     = null
+  description = "dotnet version"
+}
+
+variable "java_server" {
+  type        = string
+  default     = null
+  description = "Java server"
+}
+
+variable "java_server_version" {
+  type        = string
+  default     = null
+  description = "Java server version"
+}
+
+variable "java_version" {
+  type        = string
+  default     = null
+  description = "Java version"
+}
+
+variable "node_version" {
+  type        = string
+  default     = null
+  description = "Node version"
+}
+
+variable "php_version" {
+  type        = string
+  default     = null
+  description = "php version"
+}
+
+variable "python_version" {
+  type        = string
+  default     = null
+  description = "Python version"
+}
+
+variable "ruby_version" {
+  type        = string
+  default     = null
+  description = "Ruby version"
+}
+
 variable "application_insights_enabled" {
   description = "Use Application Insights for this App Service"
   type        = bool
@@ -372,192 +420,11 @@ variable "eventhub_authorization_rule_id" {
   description = "Eventhub authorization rule id to pass it to destination details of diagnosys setting of NSG."
 }
 
-#------------- Web app ---------------------#
-
 variable "is_linux_webapp" {
   description = "Enable linux web app"
   type        = bool
   default     = true
 }
-
-
-# variable "name" {
-#   type        = string
-#   default     = ""
-#   description = "Name  (e.g. `app` or `cluster`)."
-# }
-
-# variable "environment" {
-#   type        = string
-#   default     = ""
-#   description = "Environment (e.g. `prod`, `dev`, `staging`)."
-# }
-
-# variable "repository" {
-#   type        = string
-#   default     = ""
-#   description = "Terraform current module repo"
-# }
-
-# variable "label_order" {
-#   type        = list(any)
-#   default     = []
-#   description = "Label order, e.g. sequence of application name and environment `name`,`environment`,'attribute' [`webserver`,`qa`,`devops`,`public`,] ."
-# }
-
-# variable "managedby" {
-#   type        = string
-#   default     = ""
-#   description = "ManagedBy, eg ''."
-# }
-
-# variable "enabled" {
-#   type        = bool
-#   description = "Set to false to prevent the module from creating any resources."
-#   default     = true
-# }
-
-# variable "resource_group_name" {
-#   type        = string
-#   default     = ""
-#   description = "A container that holds related resources for an Azure solution"
-
-# }
-
-# variable "location" {
-#   type        = string
-#   default     = null
-#   description = "Location where resource group will be created."
-# }
-
-
-# variable "tags" {
-#   type        = map(string)
-#   default     = {}
-#   description = "A map of tags to add to all resources"
-# }
-
-# # APP SERVICE PLAN
-
-# variable "os_type" {
-#   description = "The O/S type for the App Services to be hosted in this plan. Possible values include `Windows`, `Linux`, and `WindowsContainer`."
-#   type        = string
-
-#   validation {
-#     condition     = try(contains(["Windows", "Linux", "WindowsContainer"], var.os_type), true)
-#     error_message = "The `os_type` value must be valid. Possible values are `Windows`, `Linux`, and `WindowsContainer`."
-#   }
-# }
-
-# variable "sku_name" {
-#   description = "The SKU for the plan. Possible values include B1, B2, B3, D1, F1, FREE, I1, I2, I3, I1v2, I2v2, I3v2, P1v2, P2v2, P3v2, P1v3, P2v3, P3v3, S1, S2, S3, SHARED, Y1, EP1, EP2, EP3, WS1, WS2, and WS3."
-#   type        = string
-
-#   validation {
-#     condition     = try(contains(["B1", "B2", "B3", "D1", "F1", "FREE", "I1", "I2", "I3", "I1v2", "I2v2", "I3v2", "P1v2", "P2v2", "P3v2", "P1v3", "P2v3", "P3v3", "S1", "S2", "S3", "SHARED", "Y1", "EP1", "EP2", "EP3", "WS1", "WS2", "WS3"], var.sku_name), true)
-#     error_message = "The `sku_name` value must be valid. Possible values include B1, B2, B3, D1, F1, FREE, I1, I2, I3, I1v2, I2v2, I3v2, P1v2, P2v2, P3v2, P1v3, P2v3, P3v3, S1, S2, S3, SHARED, Y1, EP1, EP2, EP3, WS1, WS2, and WS3."
-#   }
-# }
-
-# variable "service_plan" {
-#   description = "Definition of the dedicated plan to use"
-#   type = object({
-#     kind             = string
-#     size             = string
-#     capacity         = optional(number)
-#     tier             = string
-#     per_site_scaling = optional(bool)
-#   })
-# }
-
-# variable "ips_allowed" {
-#   description = "IPs restriction for App Service to allow specific IP addresses or ranges"
-#   type        = list(string)
-#   default     = []
-# }
-
-# variable "subnet_ids_allowed" {
-#   description = "Allow Specific Subnets for App Service"
-#   type        = list(string)
-#   default     = []
-# }
-
-# # APP SERVICE
-
-# variable "app_service_name" {
-#   description = "Specifies the name of the App Service."
-#   default     = ""
-# }
-
-# variable "app_settings" {
-#   description = "A key-value pair of App Settings."
-#   type        = map(string)
-#   default     = {}
-# }
-
-# variable "enable_client_affinity" {
-#   description = "Should the App Service send session affinity cookies, which route client requests in the same session to the same instance?"
-#   default     = false
-# }
-
-# variable "enable_https" {
-#   description = "Can the App Service only be accessed via HTTPS?"
-#   default     = false
-# }
-
-# variable "enable_client_certificate" {
-#   description = "Does the App Service require client certificates for incoming requests"
-#   default     = false
-# }
-
-# variable "site_config" {
-#   description = "Site configuration for Application Service"
-#   type        = any
-#   default     = {}
-# }
-
-# variable "enable_auth_settings" {
-#   description = "Specifies the Authenication enabled or not"
-#   default     = false
-# }
-
-# variable "default_auth_provider" {
-#   description = "The default provider to use when multiple providers have been set up. Possible values are `AzureActiveDirectory`, `Facebook`, `Google`, `MicrosoftAccount` and `Twitter`"
-#   default     = "AzureActiveDirectory"
-# }
-
-# variable "unauthenticated_client_action" {
-#   description = "The action to take when an unauthenticated client attempts to access the app. Possible values are `AllowAnonymous` and `RedirectToLoginPage`"
-#   default     = "RedirectToLoginPage"
-# }
-
-# variable "token_store_enabled" {
-#   description = "If enabled the module will durably store platform-specific security tokens that are obtained during login flows"
-#   default     = false
-# }
-
-# variable "active_directory_auth_setttings" {
-#   description = "Acitve directory authentication provider settings for app service"
-#   type        = any
-#   default     = {}
-# }
-
-# variable "connection_strings" {
-#   description = "Connection strings for App Service"
-#   type        = list(map(string))
-#   default     = []
-# }
-
-# variable "identity_ids" {
-#   description = "Specifies a list of user managed identity ids to be assigned"
-#   default     = null
-# }
-
-# variable "storage_mounts" {
-#   description = "Storage account mount points for App Service"
-#   type        = list(map(string))
-#   default     = []
-# }
 
 # # Private Endpoint
 
@@ -592,23 +459,23 @@ variable "existing_private_dns_zone_resource_group_name" {
 }
 
 # ## Addon vritual link
-# variable "addon_vent_link" {
-#   type        = bool
-#   default     = false
-#   description = "The name of the addon vnet "
-# }
+variable "addon_vent_link" {
+  type        = bool
+  default     = false
+  description = "The name of the addon vnet "
+}
 
-# variable "addon_resource_group_name" {
-#   type        = string
-#   default     = ""
-#   description = "The name of the addon vnet resource group"
-# }
+variable "addon_resource_group_name" {
+  type        = string
+  default     = ""
+  description = "The name of the addon vnet resource group"
+}
 
-# variable "addon_virtual_network_id" {
-#   type        = string
-#   default     = ""
-#   description = "The name of the addon vnet link vnet id"
-# }
+variable "addon_virtual_network_id" {
+  type        = string
+  default     = ""
+  description = "The name of the addon vnet link vnet id"
+}
 
 # # app insights
 # variable "application_insights_enabled" {
@@ -660,4 +527,80 @@ variable "app_insights_workspace_id" {
 variable "read_permissions" {
   type    = list(string)
   default = ["aggregate", "api", "draft", "extendqueries", "search"]
+}
+
+variable "use_docker" {
+  type    = bool
+  default = false
+}
+
+variable "use_dotnet" {
+  type    = bool
+  default = false
+}
+
+variable "use_php" {
+  type    = bool
+  default = false
+}
+
+variable "use_python" {
+  type    = bool
+  default = false
+}
+
+variable "use_node" {
+  type    = bool
+  default = false
+}
+
+variable "use_java" {
+  type    = bool
+  default = false
+}
+
+variable "use_ruby" {
+  type    = bool
+  default = false
+}
+
+variable "use_current_stack" {
+  type    = bool
+  default = true
+}
+
+variable "current_stack" {
+  type    = string
+  default = null
+  # Possible values -> dotnet, dotnetcore, node, python, php, and java
+}
+
+variable "java_embedded_server_enabled" {
+  type    = string
+  default = null
+}
+
+variable "use_tomcat" {
+  type    = bool
+  default = false
+}
+
+variable "tomcat_version" {
+  type    = string
+  default = null
+}
+
+variable "dotnet_core_version" {
+  type    = string
+  default = null
+}
+
+variable "use_go" {
+  type    = bool
+  default = false
+}
+
+variable "go_version" {
+  type    = string
+  default = null
 }
