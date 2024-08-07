@@ -66,7 +66,7 @@ module "windows-web-app" {
   ##----------------------------------------------------------------------------- 
   ## Dot net
   ##-----------------------------------------------------------------------------
-  use_dotnet          = false                   # Make it true if want to use it 
+  use_dotnet          = true                   # Make it true if want to use it 
   dotnet_version      = var.dotnet_version      # For dotnet
   dotnet_core_version = var.dotnet_core_version # For dotnetcore
 
@@ -93,14 +93,14 @@ module "windows-web-app" {
   ## java application
   ##-----------------------------------------------------------------------------
 
-  use_java     = true
+  use_java     = false
   java_version = var.java_version
 
   ##----------------------------------------------------------------------------- 
   ## To Deploy Docker Container
   ##-----------------------------------------------------------------------------
 
-  use_docker               = true # Make it true if want to use it 
+  use_docker               = false # Make it true if want to use it 
   docker_image_name        = var.docker_image_name
   docker_registry_url      = "<registryname>.azurecr.io"
   docker_registry_username = "<registryname>"

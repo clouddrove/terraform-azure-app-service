@@ -1,8 +1,5 @@
 #Module      : LABEL
 #Description : Terraform label module variables.
-
-#Module      : LABEL
-#Description : Terraform label module variables.
 variable "name" {
   type        = string
   default     = ""
@@ -476,27 +473,6 @@ variable "addon_virtual_network_id" {
   default     = ""
   description = "The name of the addon vnet link vnet id"
 }
-
-# # app insights
-# variable "application_insights_enabled" {
-#   description = "Specify the Application Insights use for this App Service"
-#   default     = true
-# }
-
-# variable "application_insights_id" {
-#   description = "Resource ID of the existing Application Insights"
-#   default     = null
-# }
-
-# variable "app_insights_name" {
-#   description = "The Name of the application insights"
-#   default     = ""
-# }
-
-# variable "application_insights_type" {
-#   description = "Specifies the type of Application Insights to create. Valid values are `ios` for iOS, `java` for Java web, `MobileCenter` for App Center, `Node.JS` for Node.js, `other` for General, `phone` for Windows Phone, `store` for Windows Store and `web` for ASP.NET."
-#   default     = "web"
-# }
 
 variable "retention_in_days" {
   description = "Specifies the retention period in days. Possible values are `30`, `60`, `90`, `120`, `180`, `270`, `365`, `550` or `730`"

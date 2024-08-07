@@ -50,7 +50,7 @@ module "linux-web-app" {
   ##----------------------------------------------------------------------------- 
   ## To Deploy Container
   ##-----------------------------------------------------------------------------
-  use_docker               = true
+  use_docker               = false
   docker_image_name        = var.docker_image_name
   docker_registry_url      = "<registryname>.azurecr.io"
   docker_registry_username = "<registryname>"
@@ -60,7 +60,7 @@ module "linux-web-app" {
   ##----------------------------------------------------------------------------- 
   ## Node application
   ##-----------------------------------------------------------------------------
-  use_node     = false
+  use_node     = true
   node_version = var.node_version
 
   ##----------------------------------------------------------------------------- 

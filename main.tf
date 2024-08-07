@@ -199,7 +199,7 @@ resource "azurerm_linux_web_app" "main" {
     for_each = [local.site_config]
 
     content {
-      linux_fx_version                              = lookup(site_config.value, "linux_fx_version", null) # ----> Added
+      linux_fx_version                              = lookup(site_config.value, "linux_fx_version", null) 
       container_registry_managed_identity_client_id = lookup(site_config.value, "container_registry_managed_identity_client_id", null)
       container_registry_use_managed_identity       = lookup(site_config.value, "container_registry_use_managed_identity", null)
 
@@ -242,8 +242,6 @@ resource "azurerm_linux_web_app" "main" {
           headers                   = scm_ip_restriction.value.headers
         }
       }
-
-      # scm_type                    = lookup(site_config.value, "scm_type", null)
       scm_minimum_tls_version     = lookup(site_config.value, "scm_minimum_tls_version", "1.2")
       scm_use_main_ip_restriction = length(var.scm_authorized_ips) > 0 || var.scm_authorized_subnet_ids != null ? false : true
 
@@ -535,7 +533,7 @@ resource "azurerm_windows_web_app" "main" {
     for_each = [local.site_config]
 
     content {
-      windows_fx_version                            = lookup(site_config.value, "windows_fx_version", null) # --> Added
+      windows_fx_version                            = lookup(site_config.value, "windows_fx_version", null) 
       container_registry_managed_identity_client_id = lookup(site_config.value, "container_registry_managed_identity_client_id", null)
       container_registry_use_managed_identity       = lookup(site_config.value, "container_registry_use_managed_identity", null)
 
@@ -578,8 +576,6 @@ resource "azurerm_windows_web_app" "main" {
           headers                   = scm_ip_restriction.value.headers
         }
       }
-
-      # scm_type                    = lookup(site_config.value, "scm_type", null)
       scm_minimum_tls_version     = lookup(site_config.value, "scm_minimum_tls_version", "1.2")
       scm_use_main_ip_restriction = length(var.scm_authorized_ips) > 0 || var.scm_authorized_subnet_ids != null ? false : true
 
@@ -844,7 +840,6 @@ resource "azurerm_windows_web_app" "main" {
   lifecycle {
     ignore_changes = [
       app_settings,
-      # site_config.0.application_stack,
       site_config.0.cors,
       site_config.0.ip_restriction_default_action,
       site_config.0.scm_ip_restriction_default_action,
