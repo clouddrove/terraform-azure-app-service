@@ -199,7 +199,7 @@ resource "azurerm_linux_web_app" "main" {
     for_each = [local.site_config]
 
     content {
-      linux_fx_version                              = lookup(site_config.value, "linux_fx_version", null) 
+      linux_fx_version                              = lookup(site_config.value, "linux_fx_version", null)
       container_registry_managed_identity_client_id = lookup(site_config.value, "container_registry_managed_identity_client_id", null)
       container_registry_use_managed_identity       = lookup(site_config.value, "container_registry_use_managed_identity", null)
 
@@ -533,7 +533,7 @@ resource "azurerm_windows_web_app" "main" {
     for_each = [local.site_config]
 
     content {
-      windows_fx_version                            = lookup(site_config.value, "windows_fx_version", null) 
+      windows_fx_version                            = lookup(site_config.value, "windows_fx_version", null)
       container_registry_managed_identity_client_id = lookup(site_config.value, "container_registry_managed_identity_client_id", null)
       container_registry_use_managed_identity       = lookup(site_config.value, "container_registry_use_managed_identity", null)
 

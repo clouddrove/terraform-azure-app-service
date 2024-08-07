@@ -66,7 +66,7 @@ module "windows-web-app" {
   ##----------------------------------------------------------------------------- 
   ## Dot net
   ##-----------------------------------------------------------------------------
-  use_dotnet          = true                   # Make it true if want to use it 
+  use_dotnet          = true                    # Make it true if want to use it 
   dotnet_version      = var.dotnet_version      # For dotnet
   dotnet_core_version = var.dotnet_core_version # For dotnetcore
 
