@@ -1,5 +1,6 @@
 provider "azurerm" {
   features {}
+  subscription_id = "068245d4-3c94-42fe-9c4d-9e5e1cabc60c"
 }
 
 ##----------------------------------------------------------------------------- 
@@ -20,7 +21,7 @@ module "resource_group" {
 ##-----------------------------------------------------------------------------
 module "log-analytics" {
   source                           = "clouddrove/log-analytics/azure"
-  version                          = "1.0.1"
+  version                          = "1.1.0"
   name                             = "app"
   environment                      = "test"
   label_order                      = ["name", "environment"]
@@ -28,6 +29,7 @@ module "log-analytics" {
   log_analytics_workspace_sku      = "PerGB2018"
   resource_group_name              = module.resource_group.resource_group_name
   log_analytics_workspace_location = module.resource_group.resource_group_location
+  log_analytics_workspace_id       = module.log-analytics.workspace_id
 }
 
 ##----------------------------------------------------------------------------- 

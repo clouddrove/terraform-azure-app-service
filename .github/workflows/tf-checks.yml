@@ -5,11 +5,11 @@ on:
   pull_request:
   workflow_dispatch:
   complete-linux-example:
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.7
+    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.8
     with:
       working_directory: './_example/complete/linux_web_app/'
 
   complete-windows-example:
-    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.7
+    uses: clouddrove/github-shared-workflows/.github/workflows/tf-checks.yml@1.2.8
     with:
       working_directory: './_example/complete/windows_web_app/'
