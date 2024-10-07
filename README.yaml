@@ -36,7 +36,7 @@ include:
 usage: |-
   ### Simple Example
   Here is an example of how you can use this module in your inventory structure:
-    #### Default App Service with NODE 
+    #### Default App Service with NODE
   ```hcl
   module "key_vault" {
     source                      = "clouddrove/app-service/azure"
