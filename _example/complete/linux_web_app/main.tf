@@ -1,15 +1,14 @@
 provider "azurerm" {
   features {}
-  subscription_id = "01111111111110-11-11-11-11"
+  subscription_id = "000000-11111-1223-XXX-XXXXXXXXXXXX"
 }
 
 ##----------------------------------------------------------------------------- 
 ## Resource group
 ##-----------------------------------------------------------------------------
 module "resource_group" {
-  source  = "clouddrove/resource-group/azure"
-  version = "1.0.2"
-
+  source      = "clouddrove/resource-group/azure"
+  version     = "1.0.2"
   label_order = ["name", "environment"]
   name        = "rg-example"
   environment = "test"
@@ -43,11 +42,8 @@ module "linux-web-app" {
   label_order         = ["name", "environment", ]
   resource_group_name = module.resource_group.resource_group_name
   location            = module.resource_group.resource_group_location
-
-  os_type  = var.os_type
-  sku_name = var.linux_sku_name
-
-
+  os_type             = var.os_type
+  sku_name            = var.linux_sku_name
 
   ##----------------------------------------------------------------------------- 
   ## To Deploy Container
@@ -78,7 +74,6 @@ module "linux-web-app" {
   java_version        = var.java_version
   java_server         = var.java_server
   java_server_version = var.java_server_version
-
 
   ##----------------------------------------------------------------------------- 
   ## python application
@@ -113,10 +108,9 @@ module "linux-web-app" {
 
   ##----------------------------------------------------------------------------- 
   ## App service logs 
-  ##-----------------------------------------------------------------------------
+  ##----------------------------------------------------------------------------- 
 
   app_service_logs = var.app_service_logs
-
 
   ##----------------------------------------------------------------------------- 
   ## log analytics

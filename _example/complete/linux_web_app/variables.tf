@@ -15,9 +15,9 @@ variable "enable" {
   default = true
 }
 
-variable "is_linux_webapp" {
-  default = true
-}
+# variable "is_linux_webapp" {
+#   default = true
+# }
 
 variable "dotnet_version" {
   default = "8.0"

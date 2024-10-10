@@ -159,7 +159,7 @@ locals {
   resource_group_name    = var.resource_group_name
   location               = var.location
   valid_rg_name          = var.existing_private_dns_zone == null ? local.resource_group_name : (var.existing_private_dns_zone_resource_group_name == "" ? local.resource_group_name : var.existing_private_dns_zone_resource_group_name)
-  private_dns_zone_name  = var.existing_private_dns_zone == null ? join("", azurerm_private_dns_zone.dnszone.*.name) : var.existing_private_dns_zone
+  private_dns_zone_name  = var.existing_private_dns_zone == null ? join("", azurerm_private_dns_zone.dnszone[*].name) : var.existing_private_dns_zone
 }
 
 ##----------------------------------------------------------------------------- 
@@ -507,10 +507,10 @@ resource "azurerm_linux_web_app" "main" {
     ignore_changes = [
       app_settings,
       # site_config.0.application_stack,
-      site_config.0.cors,
-      site_config.0.ip_restriction_default_action,
-      site_config.0.scm_ip_restriction_default_action,
-      site_config.0.ftps_state
+      site_config[0].cors,
+      site_config[0].ip_restriction_default_action,
+      site_config[0].scm_ip_restriction_default_action,
+      site_config[0].ftps_state
     ]
   }
 }
@@ -840,10 +840,10 @@ resource "azurerm_windows_web_app" "main" {
   lifecycle {
     ignore_changes = [
       app_settings,
-      site_config.0.cors,
-      site_config.0.ip_restriction_default_action,
-      site_config.0.scm_ip_restriction_default_action,
-      site_config.0.ftps_state
+      site_config[0].cors,
+      site_config[0].ip_restriction_default_action,
+      site_config[0].scm_ip_restriction_default_action,
+      site_config[0].ftps_state
     ]
   }
 }
@@ -898,12 +898,12 @@ resource "azurerm_private_endpoint" "pep" {
   }
 }
 
-data "azurerm_private_endpoint_connection" "private-ip-0" {
-  count               = var.enable && var.enable_private_endpoint ? 1 : 0
-  name                = join("", azurerm_private_endpoint.pep.*.name)
-  resource_group_name = local.resource_group_name
-  depends_on          = [azurerm_linux_web_app.main]
-}
+# data "azurerm_private_endpoint_connection" "private-ip-0" {
+#   count               = var.enable && var.enable_private_endpoint ? 1 : 0
+#   name                = join("", azurerm_private_endpoint.pep[*].name)
+#   resource_group_name = local.resource_group_name
+#   depends_on          = [azurerm_linux_web_app.main]
+# }
 
 ##----------------------------------------------------------------------------- 
 ## Dns Zone 
@@ -979,7 +979,7 @@ resource "azurerm_monitor_diagnostic_setting" "diagnostic" {
 ##-----------------------------------------------------------------------------
 resource "azurerm_role_assignment" "acr_pull" {
   count                            = var.enable && var.use_docker && var.site_config.container_registry_use_managed_identity == true ? 1 : 0
-  principal_id                     = var.enable && var.os_type == "Linux" ? azurerm_linux_web_app.main[0].identity.0.principal_id : azurerm_windows_web_app.main[0].identity.0.principal_id # Updated Condition
+  principal_id                     = var.enable && var.os_type == "Linux" ? azurerm_linux_web_app.main[0].identity[0].principal_id : azurerm_windows_web_app.main[0].identity[0].principal_id # Updated Condition
   role_definition_name             = "AcrPull"
   scope                            = var.acr_id
   skip_service_principal_aad_check = true
