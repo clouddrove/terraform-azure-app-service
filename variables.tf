@@ -1,5 +1,3 @@
-#Module      : LABEL
-#Description : Terraform label module variables.
 variable "name" {
   type        = string
   default     = ""
@@ -30,23 +28,17 @@ variable "managedby" {
   description = "ManagedBy, eg ''."
 }
 
+variable "extra_tags" {
+  type        = map(string)
+  default     = null
+  description = "Variable to pass extra tags."
+}
+
 variable "enable" {
   type        = bool
   default     = true
   description = "Set to false to prevent the module from creating any resources."
 }
-
-# variable "app_service_linux" {
-#   type        = bool
-#   description = "Set to false to prevent the module from creating any linux web app resources."
-#   default     = false
-# }
-
-# variable "app_service_linux_container" {
-#   type        = bool
-#   description = "Set to false to prevent the module from creating any linux web app resources."
-#   default     = false
-# }
 
 variable "resource_group_name" {
   type        = string
@@ -59,15 +51,6 @@ variable "location" {
   default     = null
   description = "Location where resource group will be created."
 }
-
-
-# variable "tags" {
-#   type        = map(string)
-#   default     = {}
-#   description = "A map of tags to add to all resources"
-# }
-
-# APP SERVICE PLAN
 
 variable "os_type" {
   type        = string
@@ -218,7 +201,7 @@ variable "dotnet_version" {
 variable "java_server" {
   type        = string
   default     = null
-  description = "Java server"
+  description = "Java server" # Possible values include JAVA, TOMCAT, and JBOSSEAP ( Its in premium sku ).
 }
 
 variable "java_server_version" {
@@ -368,61 +351,11 @@ variable "acr_id" {
   description = "Container registry id to give access to pull images"
 }
 
-variable "enable_diagnostic" {
-  type        = bool
-  default     = true
-  description = "Set to false to prevent the module from creating any resources."
-}
-
 variable "log_analytics_workspace_id" {
   type        = string
   default     = null
   description = "Log Analytics workspace id in which logs should be retained."
 }
-
-variable "metric_enabled" {
-  type        = bool
-  default     = true
-  description = "Whether metric diagnonsis should be enable in diagnostic settings for flexible Mysql."
-}
-
-variable "log_category" {
-  type        = list(string)
-  default     = ["AppServiceHTTPLogs", "AppServiceConsoleLogs", "AppServiceAuditLogs", "AppServiceAppLogs", "AppServicePlatformLogs"]
-  description = "Categories of logs to be recorded in diagnostic setting."
-}
-
-variable "log_analytics_destination_type" {
-  type        = string
-  default     = null
-  description = "Possible values are AzureDiagnostics and Dedicated, default to AzureDiagnostics. When set to Dedicated, logs sent to a Log Analytics workspace will go into resource specific tables, instead of the legacy AzureDiagnostics table."
-}
-
-variable "storage_account_id" {
-  type        = string
-  default     = null
-  description = "Storage account id to pass it to destination details of diagnosys setting of NSG."
-}
-
-variable "eventhub_name" {
-  type        = string
-  default     = null
-  description = "Eventhub Name to pass it to destination details of diagnosys setting of NSG."
-}
-
-variable "eventhub_authorization_rule_id" {
-  type        = string
-  default     = null
-  description = "Eventhub authorization rule id to pass it to destination details of diagnosys setting of NSG."
-}
-
-# variable "is_linux_webapp" {
-#   description = "Enable linux web app"
-#   type        = bool
-#   default     = true
-# }
-
-# # Private Endpoint
 
 variable "virtual_network_id" {
   type        = string
@@ -430,10 +363,10 @@ variable "virtual_network_id" {
   description = "The name of the virtual network"
 }
 
-variable "subnet_id" {
+variable "private_endpoint_subnet_id" {
   type        = string
   default     = null
-  description = "The resource ID of the subnet"
+  description = "Subnet ID for private endpoint"
 }
 
 variable "enable_private_endpoint" {
@@ -454,25 +387,6 @@ variable "existing_private_dns_zone_resource_group_name" {
   description = "The name of the existing resource group"
 }
 
-# ## Addon vritual link
-# variable "addon_vent_link" {
-#   type        = bool
-#   default     = false
-#   description = "The name of the addon vnet "
-# }
-
-# variable "addon_resource_group_name" {
-#   type        = string
-#   default     = ""
-#   description = "The name of the addon vnet resource group"
-# }
-
-# variable "addon_virtual_network_id" {
-#   type        = string
-#   default     = ""
-#   description = "The name of the addon vnet link vnet id"
-# }
-
 variable "retention_in_days" {
   type        = number
   default     = 90
@@ -483,24 +397,6 @@ variable "disable_ip_masking" {
   type        = bool
   default     = false
   description = "By default the real client ip is masked as `0.0.0.0` in the logs. Use this argument to disable masking and log the real client ip"
-}
-
-variable "enable_vnet_integration" {
-  type        = bool
-  default     = false
-  description = "Manages an App Service Virtual Network Association"
-}
-
-variable "integration_subnet_id" {
-  type        = string
-  default     = null
-  description = "The resource ID of the subnet"
-}
-
-variable "app_insights_workspace_id" {
-  type        = string
-  default     = null
-  description = "Application insights workspace id"
 }
 
 variable "read_permissions" {
@@ -597,4 +493,10 @@ variable "go_version" {
   type        = string
   default     = null
   description = "Go version"
+}
+
+variable "instance_count" {
+  type        = number
+  default     = 1
+  description = "The number of instance count for resources"
 }

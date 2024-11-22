@@ -10,15 +10,14 @@ data "azurerm_client_config" "main" {}
 ## Labels module called that will be used for naming and tags.   
 ##-----------------------------------------------------------------------------
 module "labels" {
-
-  source  = "clouddrove/labels/azure"
-  version = "1.0.0"
-
+  source      = "clouddrove/labels/azure"
+  version     = "1.0.0"
   name        = var.name
   environment = var.environment
   managedby   = var.managedby
   label_order = var.label_order
   repository  = var.repository
+  extra_tags  = var.extra_tags
 }
 
 ##----------------------------------------------------------------------------- 
@@ -166,11 +165,11 @@ locals {
 ## App service plan  
 ##-----------------------------------------------------------------------------
 resource "azurerm_service_plan" "main" {
-  count               = var.enable ? 1 : 0
-  name                = format("%s-asp", module.labels.id)
-  resource_group_name = var.resource_group_name
-  location            = var.location
-
+  count = var.enable ? 1 : 0
+  # name                = format("%s-asp-here", module.labels.id)
+  name                         = format("service-plan-%s-%s%s", module.labels.id, var.location, var.instance_count != null ? "-${var.instance_count}" : null)
+  resource_group_name          = var.resource_group_name
+  location                     = var.location
   os_type                      = var.os_type
   sku_name                     = var.sku_name
   worker_count                 = var.sku_name == "B1" ? null : var.worker_count
@@ -185,14 +184,17 @@ resource "azurerm_service_plan" "main" {
 ##-----------------------------------------------------------------------------
 
 resource "azurerm_linux_web_app" "main" {
-  count               = var.enable && var.os_type == "Linux" ? 1 : 0
-  name                = format("%s-linux-app", module.labels.id)
+  count = var.enable && var.os_type == "Linux" ? 1 : 0
+  # name                = format("%s-linux-app-here", module.labels.id)
+  name                = format("app-%s-%s%s", module.labels.id, var.location, var.instance_count != null ? "-${var.instance_count}" : null)
   resource_group_name = var.resource_group_name
   location            = var.location
   service_plan_id     = azurerm_service_plan.main[0].id
 
   public_network_access_enabled = var.public_network_access_enabled
-  virtual_network_subnet_id     = var.app_service_vnet_integration_subnet_id
+
+  # Vnet Integration
+  virtual_network_subnet_id = var.app_service_vnet_integration_subnet_id
 
 
   dynamic "site_config" {
@@ -505,7 +507,7 @@ resource "azurerm_linux_web_app" "main" {
 
   lifecycle {
     ignore_changes = [
-      app_settings,
+      # app_settings,
       # site_config.0.application_stack,
       site_config[0].cors,
       site_config[0].ip_restriction_default_action,
@@ -520,14 +522,17 @@ resource "azurerm_linux_web_app" "main" {
 ##-----------------------------------------------------------------------------
 
 resource "azurerm_windows_web_app" "main" {
-  count               = var.enable && var.os_type == "Windows" ? 1 : 0
-  name                = format("%s-windows-app", module.labels.id)
+  count = var.enable && var.os_type == "Windows" ? 1 : 0
+  # name                = format("%s-windows-app", module.labels.id)
+  name                = format("app-%s-%s%s", module.labels.id, var.location, var.instance_count != null ? "-${var.instance_count}" : null)
   resource_group_name = var.resource_group_name
   location            = var.location
   service_plan_id     = azurerm_service_plan.main[0].id
 
   public_network_access_enabled = var.public_network_access_enabled
-  virtual_network_subnet_id     = var.app_service_vnet_integration_subnet_id
+
+  # Vnet Integration
+  virtual_network_subnet_id = var.app_service_vnet_integration_subnet_id
 
   dynamic "site_config" {
     for_each = [local.site_config]
@@ -608,6 +613,7 @@ resource "azurerm_windows_web_app" "main" {
   }
 
   app_settings = var.staging_slot_custom_app_settings == null ? local.app_settings : merge(local.default_app_settings, var.staging_slot_custom_app_settings)
+
 
   dynamic "connection_string" {
     for_each = var.connection_strings
@@ -839,7 +845,7 @@ resource "azurerm_windows_web_app" "main" {
 
   lifecycle {
     ignore_changes = [
-      app_settings,
+      # app_settings,
       site_config[0].cors,
       site_config[0].ip_restriction_default_action,
       site_config[0].scm_ip_restriction_default_action,
@@ -862,7 +868,8 @@ data "azurerm_application_insights" "app_insights" {
 resource "azurerm_application_insights" "app_insights" {
   count = var.enable && var.application_insights_enabled && var.application_insights_id == null ? 1 : 0
 
-  name                = format("%s-app-insights", module.labels.id)
+  # name                = format("%s-app-insights", module.labels.id)
+  name                = format("app-insights-%s-%s%s", module.labels.id, var.location, var.instance_count != null ? "-${var.instance_count}" : null)
   location            = var.location
   resource_group_name = var.resource_group_name
   application_type    = var.application_insights_type
@@ -870,7 +877,7 @@ resource "azurerm_application_insights" "app_insights" {
   retention_in_days   = var.retention_in_days
   disable_ip_masking  = var.disable_ip_masking
   tags                = module.labels.tags
-  workspace_id        = var.app_insights_workspace_id # Added log analytics workspace id from module in main using this variable app_insights_workspace_id 
+  workspace_id        = var.log_analytics_workspace_id # Added log analytics workspace in app-insights
 }
 
 ##----------------------------------------------------------------------------- 
@@ -878,16 +885,18 @@ resource "azurerm_application_insights" "app_insights" {
 ##-----------------------------------------------------------------------------
 
 resource "azurerm_private_endpoint" "pep" {
-  count               = var.enable && var.enable_private_endpoint ? 1 : 0
-  name                = format("%s-pe-app-service", module.labels.id)
+  count = var.enable && var.enable_private_endpoint ? 1 : 0
+  # name                = format("%s-pe-app-service", module.labels.id)
+  name                = format("pep-app-service-%s-%s%s", module.labels.id, var.location, var.instance_count != null ? "-${var.instance_count}" : null)
   location            = local.location
   resource_group_name = local.resource_group_name
-  subnet_id           = var.subnet_id
+  subnet_id           = var.private_endpoint_subnet_id
   tags                = module.labels.tags
   private_service_connection {
-    name                           = format("%s-psc-app-service", module.labels.id)
+    # name                           = format("%s-psc-app-service", module.labels.id)
+    name                           = format("psc-app-service-%s-%s%s", module.labels.id, var.location, var.instance_count != null ? "-${var.instance_count}" : null)
     is_manual_connection           = false
-    private_connection_resource_id = azurerm_linux_web_app.main[0].id
+    private_connection_resource_id = var.os_type == "Linux" ? azurerm_linux_web_app.main[0].id : azurerm_windows_web_app.main[0].id
     subresource_names              = ["sites"]
   }
 
@@ -898,17 +907,18 @@ resource "azurerm_private_endpoint" "pep" {
   }
 }
 
-# data "azurerm_private_endpoint_connection" "private-ip-0" {
-#   count               = var.enable && var.enable_private_endpoint ? 1 : 0
-#   name                = join("", azurerm_private_endpoint.pep[*].name)
-#   resource_group_name = local.resource_group_name
-#   depends_on          = [azurerm_linux_web_app.main]
-# }
+##----------------------------------------------------------------------------- 
+## Data block to retreive private ip of private endpoint.
+##-----------------------------------------------------------------------------
+data "azurerm_private_endpoint_connection" "private-ip" {
+  count               = var.enable_private_endpoint ? 1 : 0
+  name                = azurerm_private_endpoint.pep[0].name
+  resource_group_name = var.resource_group_name
+}
 
 ##----------------------------------------------------------------------------- 
 ## Dns Zone 
 ##-----------------------------------------------------------------------------
-
 resource "azurerm_private_dns_zone" "dnszone" {
   count               = var.enable && var.existing_private_dns_zone == null && var.enable_private_endpoint ? 1 : 0
   name                = "privatelink.azurewebsites.net"
@@ -916,9 +926,14 @@ resource "azurerm_private_dns_zone" "dnszone" {
   tags                = module.labels.tags
 }
 
+##----------------------------------------------------------------------------- 
+## Below resource will create vnet link in private dns.
+## Vnet link will be created when there is no existing private dns zone or existing private dns zone is in same subscription.  
+##-----------------------------------------------------------------------------
 resource "azurerm_private_dns_zone_virtual_network_link" "vent-link" {
-  count                 = var.enable && var.enable_private_endpoint && (var.existing_private_dns_zone != null ? (var.existing_private_dns_zone_resource_group_name == "" ? false : true) : true) ? 1 : 0
-  name                  = var.existing_private_dns_zone == null ? format("%s-pdz-vnet-link-app-service", module.labels.id) : format("%s-pdz-vnet-link-app-service-1", module.labels.id)
+  count = var.enable && var.enable_private_endpoint && (var.existing_private_dns_zone != null ? (var.existing_private_dns_zone_resource_group_name == "" ? false : true) : true) ? 1 : 0
+  # name                  = var.existing_private_dns_zone == null ? format("%s-pdz-vnet-link-app-service", module.labels.id) : format("%s-pdz-vnet-link-app-service-1", module.labels.id)
+  name                  = var.existing_private_dns_zone == null ? format("pdz-vnet-link-app-service-%s-%s%s", module.labels.id, var.location, var.instance_count != null ? "-${var.instance_count}" : null) : format("pdz-vnet-link-app-service-1-%s-%s%s", module.labels.id, var.location, var.instance_count != null ? "-${var.instance_count}" : null)
   resource_group_name   = local.valid_rg_name
   private_dns_zone_name = local.private_dns_zone_name
   virtual_network_id    = var.virtual_network_id
@@ -926,52 +941,32 @@ resource "azurerm_private_dns_zone_virtual_network_link" "vent-link" {
 }
 
 ##----------------------------------------------------------------------------- 
+## Below resource will create dns A record for private ip of private endpoint in private dns zone. 
+##-----------------------------------------------------------------------------
+resource "azurerm_private_dns_a_record" "arecord" {
+  count               = var.enable && var.enable_private_endpoint ? 1 : 0
+  name                = lower(var.os_type == "Linux" ? azurerm_linux_web_app.main[0].name : azurerm_windows_web_app.main[0].name)
+  zone_name           = local.private_dns_zone_name
+  resource_group_name = local.valid_rg_name
+  ttl                 = 3600
+  records             = [data.azurerm_private_endpoint_connection.private-ip[0].private_service_connection[0].private_ip_address]
+  tags                = module.labels.tags
+  lifecycle {
+    ignore_changes = [
+      tags,
+    ]
+  }
+}
+
+##----------------------------------------------------------------------------- 
 ## Telemetry  
 ##-----------------------------------------------------------------------------
 
 resource "azurerm_application_insights_api_key" "read_telemetry" {
-  name                    = format("%s-app-insights-api-key", module.labels.id)
+  # name                    = format("%s-app-insights-api-key", module.labels.id)
+  name                    = format("app-insights-api-key-%s-%s%s", module.labels.id, var.location, var.instance_count != null ? "-${var.instance_count}" : null)
   application_insights_id = azurerm_application_insights.app_insights[0].id
   read_permissions        = var.read_permissions
-}
-
-##----------------------------------------------------------------------------- 
-## Vnet Integration
-##-----------------------------------------------------------------------------
-
-resource "azurerm_app_service_virtual_network_swift_connection" "main" {
-  count          = var.enable_vnet_integration == true ? 1 : 0
-  app_service_id = azurerm_linux_web_app.main[0].id
-  subnet_id      = var.integration_subnet_id
-}
-
-##----------------------------------------------------------------------------- 
-## Diagnostic settings  
-##-----------------------------------------------------------------------------
-
-resource "azurerm_monitor_diagnostic_setting" "diagnostic" {
-  count                          = var.enable && var.enable_diagnostic ? 1 : 0
-  name                           = format("%s-diagnostic-log", module.labels.id)
-  target_resource_id             = var.enable && var.os_type == "Linux" ? azurerm_linux_web_app.main[0].id : azurerm_windows_web_app.main[0].id # Added condition for both linux and windows 
-  log_analytics_workspace_id     = var.log_analytics_workspace_id
-  storage_account_id             = var.storage_account_id
-  eventhub_name                  = var.eventhub_name
-  eventhub_authorization_rule_id = var.eventhub_authorization_rule_id
-  log_analytics_destination_type = var.log_analytics_destination_type
-  dynamic "enabled_log" {
-    for_each = var.log_category
-    content {
-      category = enabled_log.value
-    }
-  }
-
-  dynamic "metric" {
-    for_each = var.metric_enabled ? ["AllMetrics"] : []
-    content {
-      category = metric.value
-      enabled  = true
-    }
-  }
 }
 
 ##----------------------------------------------------------------------------- 
@@ -983,4 +978,14 @@ resource "azurerm_role_assignment" "acr_pull" {
   role_definition_name             = "AcrPull"
   scope                            = var.acr_id
   skip_service_principal_aad_check = true
+}
+
+##----------------------------------------------------------------------------- 
+## Below resource will create User Assigned Identity
+##-----------------------------------------------------------------------------
+resource "azurerm_user_assigned_identity" "identity" {
+  # name                = format("%s-user-identity", module.labels.id)
+  name                = format("user-identity-%s-%s%s", module.labels.id, var.location, var.instance_count != null ? "-${var.instance_count}" : null)
+  location            = var.location
+  resource_group_name = var.resource_group_name
 }

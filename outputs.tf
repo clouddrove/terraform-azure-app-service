@@ -42,3 +42,11 @@ output "app_service_site_credential" {
   description = "Site credential block of the App Service"
   value       = azurerm_linux_web_app.main[*].site_credential
 }
+
+output "instrumentation_key" {
+  value = azurerm_application_insights.app_insights[0].instrumentation_key
+}
+
+output "connection_string" {
+  value = azurerm_application_insights.app_insights[0].connection_string
+}
