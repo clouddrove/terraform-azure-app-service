@@ -1,5 +1,3 @@
-#Module      : LABEL
-#Description : Terraform label module variables.
 variable "name" {
   type        = string
   default     = ""
@@ -20,7 +18,7 @@ variable "repository" {
 
 variable "label_order" {
   type        = list(any)
-  default     = []
+  default     = ["name", "environment", ]
   description = "Label order, e.g. sequence of application name and environment `name`,`environment`,'attribute' [`webserver`,`qa`,`devops`,`public`,] ."
 }
 
@@ -30,17 +28,22 @@ variable "managedby" {
   description = "ManagedBy, eg ''."
 }
 
-variable "enabled" {
+variable "extra_tags" {
+  type        = map(string)
+  default     = null
+  description = "Variable to pass extra tags."
+}
+
+variable "enable" {
   type        = bool
-  description = "Set to false to prevent the module from creating any resources."
   default     = true
+  description = "Set to false to prevent the module from creating any resources."
 }
 
 variable "resource_group_name" {
   type        = string
   default     = ""
   description = "A container that holds related resources for an Azure solution"
-
 }
 
 variable "location" {
@@ -49,116 +52,310 @@ variable "location" {
   description = "Location where resource group will be created."
 }
 
+variable "os_type" {
+  type        = string
+  description = "The O/S type for the App Services to be hosted in this plan. Possible values include `Windows`, `Linux`, and `WindowsContainer`."
 
-variable "tags" {
-  type        = map(string)
-  default     = {}
-  description = "A map of tags to add to all resources"
+  validation {
+    condition     = try(contains(["Windows", "Linux", "WindowsContainer"], var.os_type), true)
+    error_message = "The `os_type` value must be valid. Possible values are `Windows`, `Linux`, and `WindowsContainer`."
+  }
 }
 
-# APP SERVICE PLAN
+variable "sku_name" {
+  type        = string
+  description = "The SKU for the plan. Possible values include B1, B2, B3, D1, F1, FREE, I1, I2, I3, I1v2, I2v2, I3v2, P1v2, P2v2, P3v2, P1v3, P2v3, P3v3, S1, S2, S3, SHARED, Y1, EP1, EP2, EP3, WS1, WS2, and WS3."
 
-variable "service_plan" {
-  description = "Definition of the dedicated plan to use"
-  type = object({
-    kind             = string
-    size             = string
-    capacity         = optional(number)
-    tier             = string
-    per_site_scaling = optional(bool)
-  })
+  validation {
+    condition     = try(contains(["B1", "B2", "B3", "D1", "F1", "FREE", "I1", "I2", "I3", "I1v2", "I2v2", "I3v2", "P1v2", "P2v2", "P3v2", "P1v3", "P2v3", "P3v3", "S1", "S2", "S3", "SHARED", "Y1", "EP1", "EP2", "EP3", "WS1", "WS2", "WS3"], var.sku_name), true)
+    error_message = "The `sku_name` value must be valid. Possible values include B1, B2, B3, D1, F1, FREE, I1, I2, I3, I1v2, I2v2, I3v2, P1v2, P2v2, P3v2, P1v3, P2v3, P3v3, S1, S2, S3, SHARED, Y1, EP1, EP2, EP3, WS1, WS2, and WS3."
+  }
 }
 
-variable "ips_allowed" {
-  description = "IPs restriction for App Service to allow specific IP addresses or ranges"
-  type        = list(string)
-  default     = []
+variable "app_service_environment_id" {
+  type        = string
+  default     = null
+  description = "The ID of the App Service Environment to create this Service Plan in. Requires an Isolated SKU. Use one of I1, I2, I3 for azurerm_app_service_environment, or I1v2, I2v2, I3v2 for azurerm_app_service_environment_v3"
 }
 
-variable "subnet_ids_allowed" {
-  description = "Allow Specific Subnets for App Service"
-  type        = list(string)
-  default     = []
+variable "worker_count" {
+  type        = number
+  default     = 1
+  description = "The number of Workers (instances) to be allocated."
 }
 
-# APP SERVICE
-
-variable "app_service_name" {
-  description = "Specifies the name of the App Service."
-  default     = ""
+variable "maximum_elastic_worker_count" {
+  type        = number
+  default     = null
+  description = "The maximum number of workers to use in an Elastic SKU Plan. Cannot be set unless using an Elastic SKU."
 }
 
-variable "app_settings" {
-  description = "A key-value pair of App Settings."
-  type        = map(string)
-  default     = {}
-}
-
-variable "enable_client_affinity" {
-  description = "Should the App Service send session affinity cookies, which route client requests in the same session to the same instance?"
+variable "per_site_scaling_enabled" {
+  type        = bool
   default     = false
+  description = "Should Per Site Scaling be enabled."
 }
 
-variable "enable_https" {
-  description = "Can the App Service only be accessed via HTTPS?"
-  default     = false
+variable "public_network_access_enabled" {
+  type        = bool
+  default     = true
+  description = "Whether enable public access for the App Service."
 }
 
-variable "enable_client_certificate" {
-  description = "Does the App Service require client certificates for incoming requests"
-  default     = false
+variable "app_service_vnet_integration_subnet_id" {
+  type        = string
+  default     = null
+  description = "Id of the subnet to associate with the app service"
 }
 
 variable "site_config" {
-  description = "Site configuration for Application Service"
   type        = any
   default     = {}
+  description = "Site config for App Service. See documentation https://www.terraform.io/docs/providers/azurerm/r/app_service.html#site_config. IP restriction attribute is no more managed in this block."
 }
 
-variable "enable_auth_settings" {
-  description = "Specifies the Authenication enabled or not"
-  default     = false
+variable "authorized_subnet_ids" {
+  type        = list(string)
+  default     = []
+  description = "Subnets restriction for App Service. See documentation https://www.terraform.io/docs/providers/azurerm/r/app_service.html#ip_restriction"
 }
 
-variable "default_auth_provider" {
-  description = "The default provider to use when multiple providers have been set up. Possible values are `AzureActiveDirectory`, `Facebook`, `Google`, `MicrosoftAccount` and `Twitter`"
-  default     = "AzureActiveDirectory"
+variable "ip_restriction_headers" {
+  type        = map(list(string))
+  default     = null
+  description = "IPs restriction headers for App Service. See documentation https://www.terraform.io/docs/providers/azurerm/r/app_service.html#headers"
 }
 
-variable "unauthenticated_client_action" {
-  description = "The action to take when an unauthenticated client attempts to access the app. Possible values are `AllowAnonymous` and `RedirectToLoginPage`"
-  default     = "RedirectToLoginPage"
+variable "authorized_ips" {
+  type        = list(string)
+  default     = []
+  description = "IPs restriction for App Service. See documentation https://www.terraform.io/docs/providers/azurerm/r/app_service.html#ip_restriction"
 }
 
-variable "token_store_enabled" {
-  description = "If enabled the module will durably store platform-specific security tokens that are obtained during login flows"
-  default     = false
+variable "authorized_service_tags" {
+  type        = list(string)
+  default     = []
+  description = "Service Tags restriction for App Service. See documentation https://www.terraform.io/docs/providers/azurerm/r/app_service.html#ip_restriction"
 }
 
-variable "active_directory_auth_setttings" {
-  description = "Acitve directory authentication provider settings for app service"
-  type        = any
+variable "scm_authorized_subnet_ids" {
+  type        = list(string)
+  default     = []
+  description = "SCM subnets restriction for App Service. See documentation https://www.terraform.io/docs/providers/azurerm/r/app_service.html#scm_ip_restriction"
+}
+
+variable "scm_ip_restriction_headers" {
+  type        = map(list(string))
+  default     = null
+  description = "IPs restriction headers for App Service. See documentation https://www.terraform.io/docs/providers/azurerm/r/app_service.html#headers"
+}
+
+variable "scm_authorized_ips" {
+  type        = list(string)
+  default     = []
+  description = "SCM IPs restriction for App Service. See documentation https://www.terraform.io/docs/providers/azurerm/r/app_service.html#scm_ip_restriction"
+}
+
+variable "scm_authorized_service_tags" {
+  type        = list(string)
+  default     = []
+  description = "SCM Service Tags restriction for App Service. See documentation https://www.terraform.io/docs/providers/azurerm/r/app_service.html#scm_ip_restriction"
+}
+
+variable "staging_slot_custom_app_settings" {
+  type        = map(string)
+  default     = null
+  description = "Override staging slot with custom app settings"
+}
+
+variable "docker_image_name" {
+  type        = string
+  default     = ""
+  description = "The docker image, including tag, to be used. e.g. appsvc/staticsite:latest."
+}
+
+variable "docker_registry_url" {
+  type        = string
+  default     = ""
+  description = "The URL of the container registry where the docker_image_name is located. e.g. https://index.docker.io or https://mcr.microsoft.com. This value is required with docker_image_name"
+}
+
+variable "docker_registry_username" {
+  type        = string
+  default     = null
+  description = "The User Name to use for authentication against the registry to pull the image."
+}
+
+variable "docker_registry_password" {
+  type        = string
+  default     = null
+  description = "The User Name to use for authentication against the registry to pull the image."
+}
+
+variable "dotnet_version" {
+  type        = string
+  default     = null
+  description = "dotnet version"
+}
+
+variable "java_server" {
+  type        = string
+  default     = null
+  description = "Java server" # Possible values include JAVA, TOMCAT, and JBOSSEAP ( Its in premium sku ).
+}
+
+variable "java_server_version" {
+  type        = string
+  default     = null
+  description = "Java server version"
+}
+
+variable "java_version" {
+  type        = string
+  default     = null
+  description = "Java version"
+}
+
+variable "node_version" {
+  type        = string
+  default     = null
+  description = "Node version"
+}
+
+variable "php_version" {
+  type        = string
+  default     = null
+  description = "php version"
+}
+
+variable "python_version" {
+  type        = string
+  default     = null
+  description = "Python version"
+}
+
+variable "ruby_version" {
+  type        = string
+  default     = null
+  description = "Ruby version"
+}
+
+variable "application_insights_enabled" {
+  type        = bool
+  default     = true
+  description = "Use Application Insights for this App Service"
+}
+
+variable "app_settings" {
+  type        = map(string)
   default     = {}
+  description = "Application settings for App Service. See documentation https://www.terraform.io/docs/providers/azurerm/r/app_service.html#app_settings"
 }
 
 variable "connection_strings" {
-  description = "Connection strings for App Service"
   type        = list(map(string))
   default     = []
+  description = "Connection strings for App Service. See documentation https://www.terraform.io/docs/providers/azurerm/r/app_service.html#connection_string"
 }
 
-variable "identity_ids" {
-  description = "Specifies a list of user managed identity ids to be assigned"
+variable "auth_settings" {
+  type        = any
+  default     = {}
+  description = "Authentication settings. Issuer URL is generated thanks to the tenant ID. For active_directory block, the allowed_audiences list is filled with a value generated with the name of the App Service. See https://www.terraform.io/docs/providers/azurerm/r/app_service.html#auth_settings"
+}
+
+variable "auth_settings_v2" {
+  type        = any
+  default     = {}
+  description = "Authentication settings V2. See https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_web_app#auth_settings_v2"
+}
+
+variable "client_affinity_enabled" {
+  type        = bool
+  default     = false
+  description = "Client affinity activation for App Service. See documentation https://www.terraform.io/docs/providers/azurerm/r/app_service.html#client_affinity_enabled"
+}
+
+variable "https_only" {
+  type        = bool
+  default     = false
+  description = "HTTPS restriction for App Service. See documentation https://www.terraform.io/docs/providers/azurerm/r/app_service.html#https_only"
+}
+
+variable "mount_points" {
+  type        = list(map(string))
+  default     = []
+  description = "Storage Account mount points. Name is generated if not set and default type is AzureFiles. See https://www.terraform.io/docs/providers/azurerm/r/app_service.html#storage_account"
+}
+
+variable "app_service_logs" {
+  type = object({
+    detailed_error_messages = optional(bool)
+    failed_request_tracing  = optional(bool)
+    application_logs = optional(object({
+      file_system_level = string
+      azure_blob_storage = optional(object({
+        level             = string
+        retention_in_days = number
+        sas_url           = string
+      }))
+    }))
+    http_logs = optional(object({
+      azure_blob_storage = optional(object({
+        retention_in_days = number
+        sas_url           = string
+      }))
+      file_system = optional(object({
+        retention_in_days = number
+        retention_in_mb   = number
+      }))
+    }))
+  })
   default     = null
+  description = "Configuration of the App Service and App Service Slot logs. Documentation [here](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/linux_web_app#logs)"
 }
 
-variable "storage_mounts" {
-  description = "Storage account mount points for App Service"
-  type        = list(map(string))
-  default     = []
+variable "identity" {
+  type = object({
+    type         = string
+    identity_ids = list(string)
+  })
+  default = {
+    type         = "SystemAssigned"
+    identity_ids = []
+  }
+  description = "Map with identity block information."
 }
 
-# Private Endpoint
+variable "application_insights_id" {
+  type        = string
+  default     = null
+  description = "ID of the existing Application Insights to use instead of deploying a new one."
+}
+
+variable "application_insights_type" {
+  type        = string
+  default     = "web"
+  description = "Application type for Application Insights resource"
+}
+
+variable "application_insights_sampling_percentage" {
+  type        = number
+  default     = null
+  description = "Specifies the percentage of sampled datas for Application Insights. Documentation [here](https://docs.microsoft.com/en-us/azure/azure-monitor/app/sampling#ingestion-sampling)"
+}
+
+variable "acr_id" {
+  type        = string
+  default     = null
+  description = "Container registry id to give access to pull images"
+}
+
+variable "log_analytics_workspace_id" {
+  type        = string
+  default     = null
+  description = "Log Analytics workspace id in which logs should be retained."
+}
 
 variable "virtual_network_id" {
   type        = string
@@ -166,10 +363,10 @@ variable "virtual_network_id" {
   description = "The name of the virtual network"
 }
 
-variable "subnet_id" {
+variable "private_endpoint_subnet_id" {
   type        = string
   default     = null
-  description = "The resource ID of the subnet"
+  description = "Subnet ID for private endpoint"
 }
 
 variable "enable_private_endpoint" {
@@ -190,63 +387,116 @@ variable "existing_private_dns_zone_resource_group_name" {
   description = "The name of the existing resource group"
 }
 
-## Addon vritual link
-variable "addon_vent_link" {
-  type        = bool
-  default     = false
-  description = "The name of the addon vnet "
-}
-
-variable "addon_resource_group_name" {
-  type        = string
-  default     = ""
-  description = "The name of the addon vnet resource group"
-}
-
-variable "addon_virtual_network_id" {
-  type        = string
-  default     = ""
-  description = "The name of the addon vnet link vnet id"
-}
-
-# app insights
-variable "application_insights_enabled" {
-  description = "Specify the Application Insights use for this App Service"
-  default     = true
-}
-
-variable "application_insights_id" {
-  description = "Resource ID of the existing Application Insights"
-  default     = null
-}
-
-variable "app_insights_name" {
-  description = "The Name of the application insights"
-  default     = ""
-}
-
-variable "application_insights_type" {
-  description = "Specifies the type of Application Insights to create. Valid values are `ios` for iOS, `java` for Java web, `MobileCenter` for App Center, `Node.JS` for Node.js, `other` for General, `phone` for Windows Phone, `store` for Windows Store and `web` for ASP.NET."
-  default     = "web"
-}
-
 variable "retention_in_days" {
-  description = "Specifies the retention period in days. Possible values are `30`, `60`, `90`, `120`, `180`, `270`, `365`, `550` or `730`"
+  type        = number
   default     = 90
+  description = "Specifies the retention period in days. Possible values are `30`, `60`, `90`, `120`, `180`, `270`, `365`, `550` or `730`"
 }
 
 variable "disable_ip_masking" {
+  type        = bool
+  default     = false
   description = "By default the real client ip is masked as `0.0.0.0` in the logs. Use this argument to disable masking and log the real client ip"
-  default     = false
 }
 
-variable "enable_vnet_integration" {
-  description = "Manages an App Service Virtual Network Association"
-  default     = false
+variable "read_permissions" {
+  type        = list(string)
+  default     = ["aggregate", "api", "draft", "extendqueries", "search"]
+  description = "Read permissions for telemetry"
 }
 
-variable "integration_subnet_id" {
+variable "use_docker" {
+  type        = bool
+  default     = false
+  description = "Variable to use container as runtime"
+}
+
+variable "use_dotnet" {
+  type        = bool
+  default     = false
+  description = "Variable to use dotnet as runtime"
+}
+
+variable "use_php" {
+  type        = bool
+  default     = false
+  description = "Variable to use php as runtime"
+}
+
+variable "use_python" {
+  type        = bool
+  default     = false
+  description = "Variable to use python as runtime"
+}
+
+variable "use_node" {
+  type        = bool
+  default     = false
+  description = "Variable to use node as runtime"
+}
+
+variable "use_java" {
+  type        = bool
+  default     = false
+  description = "Variable to use java as runtime"
+}
+
+variable "use_ruby" {
+  type        = bool
+  default     = false
+  description = "Variable to use ruby as runtime"
+}
+
+variable "use_current_stack" {
+  type        = bool
+  default     = true
+  description = "Variable for current stack for windows web app ( Possible values -> dotnet, dotnetcore, node, python, php, and java )"
+}
+
+variable "current_stack" {
   type        = string
   default     = null
-  description = "The resource ID of the subnet"
+  description = "Specify runtime stack here"
+}
+
+variable "java_embedded_server_enabled" {
+  type        = string
+  default     = null
+  description = "Java server"
+}
+
+variable "use_tomcat" {
+  type        = bool
+  default     = false
+  description = "Variable to use tomcat as runtime"
+}
+
+variable "tomcat_version" {
+  type        = string
+  default     = null
+  description = "tomcat version"
+}
+
+variable "dotnet_core_version" {
+  type        = string
+  default     = null
+  description = "dotnet version"
+}
+
+variable "use_go" {
+  type        = bool
+  default     = false
+  description = "Variable to use GO as runtime"
+}
+
+variable "go_version" {
+  type        = string
+  default     = null
+  description = "Go version"
+}
+
+variable "instance_count" {
+  type        = number
+  default     = 1
+  description = "The number of instance count for resources"
 }
